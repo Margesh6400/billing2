@@ -85,6 +85,11 @@ const translations = {
   'Edit': { gu: 'સંપાદિત કરો', en: 'Edit' },
   'View': { gu: 'જુઓ', en: 'View' },
   'Download': { gu: 'ડાઉનલોડ કરો', en: 'Download' },
+  'Menu': { gu: 'મેનુ', en: 'Menu' },
+  'Settings': { gu: 'સેટિંગ્સ', en: 'Settings' },
+  'Sign Out': { gu: 'સાઇન આઉટ', en: 'Sign Out' },
+  'Show Email': { gu: 'ઇમેઇલ બતાવો', en: 'Show Email' },
+  'User': { gu: 'વપરાશકર્તા', en: 'User' },
   
   // Company
   'NO WERE TECH': { gu: 'NO WERE TECH', en: 'NO WERE TECH' },

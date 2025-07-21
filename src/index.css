@@ -6,6 +6,9 @@
 @import '@fontsource/noto-sans-gujarati/600.css';
 @import '@fontsource/noto-sans-gujarati/700.css';
 
+/* Import Google Fonts for better Gujarati support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@300;400;500;600;700&display=swap');
+
 /* Gujarati font support */
 @layer base {
   body {
@@ -18,6 +21,11 @@
   .gujarati-text {
     font-family: 'Noto Sans Gujarati', sans-serif;
     font-feature-settings: "kern" 1;
+  }
+  
+  /* High contrast Gujarati font class */
+  .font-noto-gujarati {
+    font-family: 'Noto Sans Gujarati', sans-serif;
   }
   
   /* Mobile-first responsive design */
@@ -58,6 +66,12 @@
   textarea {
     font-size: 16px;
   }
+}
+
+/* High contrast for outdoor visibility */
+.high-contrast {
+  color: #1a1a1a;
+  background: #ffffff;
 }
 
 /* Gujarati font class */
@@ -117,4 +131,18 @@
 
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Smooth menu animations */
+.menu-slide-in {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
