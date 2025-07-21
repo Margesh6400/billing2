@@ -13,7 +13,7 @@ const NAVIGATION_ITEMS = [
   { key: 'return', labelKey: 'Return', icon: RotateCcw, path: '/return' },
   { key: 'clients', labelKey: 'Clients', icon: Users, path: '/clients' },
   { key: 'stock', labelKey: 'Stock', icon: Package, path: '/stock' },
-  { key: 'challans', labelKey: 'Challans', icon: Receipt, path: '/challans' },
+  { key: 'challans', labelKey: 'Challan Management', icon: Receipt, path: '/challans' },
   { key: 'bills', labelKey: 'Bills', icon: DollarSign, path: '/bills' },
   { key: 'ledger', labelKey: 'Ledger', icon: BarChart3, path: '/ledger' }
 ]

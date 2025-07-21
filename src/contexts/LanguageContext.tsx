@@ -22,6 +22,18 @@ const translations = {
   'Bills': { gu: 'બિલ', en: 'Bills' },
   'Ledger': { gu: 'ખાતાવહી', en: 'Ledger' },
   
+  // Challan Management
+  'Challan Management': { gu: 'ચલણ વ્યવસ્થાપન', en: 'Challan Management' },
+  'Udhar Challans': { gu: 'ઉધાર ચલણ', en: 'Udhar Challans' },
+  'Jama Challans': { gu: 'જમા ચલણ', en: 'Jama Challans' },
+  'Challan Number': { gu: 'ચલણ નંબર', en: 'Challan Number' },
+  'Challan Date': { gu: 'ચલણ તારીખ', en: 'Challan Date' },
+  'Client Name': { gu: 'ગ્રાહકનું નામ', en: 'Client Name' },
+  'Client Details': { gu: 'ગ્રાહક વિગતો', en: 'Client Details' },
+  'Plate Details': { gu: 'પ્લેટ વિગતો', en: 'Plate Details' },
+  'plates': { gu: 'પ્લેટ્સ', en: 'plates' },
+  'Downloading...': { gu: 'ડાઉનલોડ થઈ રહ્યું છે...', en: 'Downloading...' },
+  
   // Dashboard
   'Total Clients': { gu: 'કુલ ગ્રાહકો', en: 'Total Clients' },
   'Active Rentals': { gu: 'સક્રિય ભાડા', en: 'Active Rentals' },
