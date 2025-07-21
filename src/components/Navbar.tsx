@@ -1,96 +1,191 @@
 import React, { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import {
+  Home, FileText, Users, Package, Receipt, DollarSign, 
+  Menu, X, LogOut, ChevronRight
+} from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-import { Menu, X, LogOut, FileText, Users, Package } from 'lucide-react'
+
+const NAVIGATION_ITEMS = [
+  { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/', color: 'bg-blue-500' },
+  { id: 'issue', label: 'Issue', icon: FileText, path: '/issue', color: 'bg-green-500' },
+  { id: 'clients', label: 'Clients', icon: Users, path: '/clients', color: 'bg-purple-500' },
+  { id: 'stock', label: 'Stock', icon: Package, path: '/stock', color: 'bg-orange-500' },
+  { id: 'challans', label: 'Challans', icon: Receipt, path: '/challans', color: 'bg-indigo-500' },
+  { id: 'bills', label: 'Bills', icon: DollarSign, path: '/bills', color: 'bg-red-500' },
+]
 
 export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { signOut } = useAuth()
+  const location = useLocation()
 
-  const navigation = [
-    { name: 'Issue Plates', href: '#', icon: FileText, current: true },
-    { name: 'Clients', href: '#', icon: Users, current: false },
-    { name: 'Inventory', href: '#', icon: Package, current: false },
-  ]
-
-  const handleSignOut = async () => {
-    await signOut()
+  const isActivePath = (path: string) => {
+    if (path === '/') return location.pathname === '/'
+    return location.pathname.startsWith(path)
   }
 
   return (
-    <nav className="bg-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <h1 className="text-xl font-bold text-gray-900">Plate Rental</h1>
+    <>
+      {/* DESKTOP NAVIGATION - Modern Grid Layout */}
+      <nav className="fixed top-0 left-0 right-0 z-50 hidden bg-white border-b shadow-sm lg:block">
+        <div className="px-6 mx-auto max-w-7xl">
+          <div className="flex items-center justify-between h-16">
+            {/* Brand */}
+            <div className="flex items-center space-x-8">
+              <h1 className="text-2xl font-black text-gray-900">
+                <span className="text-blue-600">Plate</span>Rental
+              </h1>
+              
+              {/* Navigation Pills */}
+              <div className="flex items-center space-x-2">
+                {NAVIGATION_ITEMS.map((item) => (
+                  <Link
+                    key={item.id}
+                    to={item.path}
+                    className={`
+                      group relative flex items-center space-x-2 px-4 py-2 rounded-full
+                      transition-all duration-200 hover:scale-105
+                      ${isActivePath(item.path)
+                        ? `${item.color} text-white shadow-lg`
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }
+                    `}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
-            <div className="hidden md:ml-6 md:flex md:space-x-8">
-              {navigation.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className={`${
-                    item.current
-                      ? 'border-blue-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                  } inline-flex items-center gap-2 px-1 pt-1 border-b-2 text-sm font-medium transition-colors`}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.name}
-                </a>
-              ))}
-            </div>
-          </div>
 
-          <div className="hidden md:flex md:items-center">
+            {/* Sign Out */}
             <button
-              onClick={handleSignOut}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              onClick={signOut}
+              className="flex items-center px-4 py-2 space-x-2 text-gray-600 transition-colors rounded-full hover:bg-red-50 hover:text-red-600"
             >
               <LogOut className="w-4 h-4" />
-              Sign Out
-            </button>
-          </div>
-
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-            >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <span className="text-sm font-medium">Sign Out</span>
             </button>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile menu */}
-      {isOpen && (
-        <div className="md:hidden">
-          <div className="pt-2 pb-3 space-y-1 sm:px-3">
-            {navigation.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className={`${
-                  item.current
-                    ? 'bg-blue-50 border-blue-500 text-blue-700'
-                    : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
-                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium flex items-center gap-3`}
+      {/* MOBILE HEADER */}
+      <header className="sticky top-0 z-50 bg-white border-b shadow-sm lg:hidden">
+        <div className="flex items-center justify-between px-4 h-14">
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2 transition-colors rounded-lg hover:bg-gray-100"
+          >
+            <Menu className="w-6 h-6 text-gray-700" />
+          </button>
+          
+          <h1 className="text-lg font-black">
+            <span className="text-blue-600">Plate</span>Rental
+          </h1>
+          
+          <div className="w-10" /> {/* Spacer for centering */}
+        </div>
+      </header>
+
+      {/* MOBILE SLIDE-OUT MENU */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* Menu Panel */}
+          <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 border-b h-14 bg-gray-50">
+              <h2 className="text-lg font-bold text-gray-900">Navigation</h2>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 transition-colors rounded-lg hover:bg-gray-200"
               >
-                <item.icon className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-            <button
-              onClick={handleSignOut}
-              className="w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 text-base font-medium flex items-center gap-3"
-            >
-              <LogOut className="w-5 h-5" />
-              Sign Out
-            </button>
+                <X className="w-5 h-5 text-gray-700" />
+              </button>
+            </div>
+
+            {/* Navigation Cards */}
+            <div className="h-full p-4 pb-20 space-y-3 overflow-y-auto">
+              {NAVIGATION_ITEMS.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`
+                    group flex items-center justify-between p-4 rounded-xl
+                    transition-all duration-200 hover:scale-[1.02]
+                    ${isActivePath(item.path)
+                      ? `${item.color} text-white shadow-lg`
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                    }
+                  `}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`
+                      p-2 rounded-lg
+                      ${isActivePath(item.path) ? 'bg-white/20' : 'bg-white'}
+                    `}>
+                      <item.icon className={`h-5 w-5 ${isActivePath(item.path) ? 'text-white' : item.color.replace('bg-', 'text-')}`} />
+                    </div>
+                    <span className="text-base font-medium">{item.label}</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 opacity-50" />
+                </Link>
+              ))}
+              
+              {/* Sign Out Card */}
+              <button
+                onClick={signOut}
+                className="w-full flex items-center justify-between p-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-all duration-200 hover:scale-[1.02]"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-white rounded-lg">
+                    <LogOut className="w-5 h-5 text-red-500" />
+                  </div>
+                  <span className="text-base font-medium">Sign Out</span>
+                </div>
+                <ChevronRight className="w-5 h-5 opacity-50" />
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </nav>
+
+      {/* MOBILE BOTTOM TAB BAR */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t shadow-lg lg:hidden">
+        <div className="grid h-16 grid-cols-6">
+          {NAVIGATION_ITEMS.map((item) => (
+            <Link
+              key={item.id}
+              to={item.path}
+              className={`
+                flex flex-col items-center justify-center space-y-1
+                transition-all duration-200
+                ${isActivePath(item.path)
+                  ? 'text-blue-600 scale-110'
+                  : 'text-gray-500 hover:text-gray-700'
+                }
+              `}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="px-1 text-xs font-medium truncate">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      {/* Desktop Spacer */}
+      <div className="hidden h-16 lg:block" />
+      
+      {/* Mobile Bottom Spacer */}
+      <div className="h-16 lg:hidden" />
+    </>
   )
 }

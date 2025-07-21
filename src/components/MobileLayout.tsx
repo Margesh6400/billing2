@@ -15,7 +15,7 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-[100] bg-white shadow-sm">
         <div className="flex items-center justify-between px-4 h-14">
           <h1 className="text-lg font-bold text-blue-900">NO WERE TECH</h1>
           <button className="p-2 rounded-full hover:bg-gray-100">
@@ -25,12 +25,12 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content with top and bottom padding for header and nav */}
-      <main className="flex-1 w-full max-w-screen-sm px-4 pt-16 pb-20 mx-auto">
+      <main className="flex-1 w-full max-w-screen-sm px-4 pt-14 pb-16 mx-auto overflow-y-auto">
         {children}
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-1px_3px_rgba(0,0,0,0.1)] z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-1px_3px_rgba(0,0,0,0.1)] z-[100]">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path
