@@ -2,15 +2,17 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { AuthForm } from './components/AuthForm'
-import { Layout } from './components/Layout'
-import { Dashboard } from './components/Dashboard'
-import { IssueRental } from './components/IssueRental'
-import { ReturnPage } from './components/ReturnPage'
+import { MobileLayout } from './components/MobileLayout'
+import { MobileDashboard } from './components/MobileDashboard'
+import { MobileIssueRental } from './components/MobileIssueRental'
+import { MobileReturnPage } from './components/MobileReturnPage'
+import { MobileClientsPage } from './components/MobileClientsPage'
+import { MobileStockPage } from './components/MobileStockPage'
 import { LedgerPage } from './components/LedgerPage'
-import { StockPage } from './components/StockPage'
 import { BillingPage } from './components/BillingPage'
 import { ChallanManagementPage } from './components/ChallanManagementPage'
 import { BillManagementPage } from './components/BillManagementPage'
+import { LanguageProvider } from './contexts/LanguageContext'
 import { Loader2 } from 'lucide-react'
 
 function App() {
@@ -32,19 +34,21 @@ function App() {
   }
 
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/issue" element={<IssueRental />} />
-        <Route path="/return" element={<ReturnPage />} />
-        <Route path="/ledger" element={<LedgerPage />} />
-        <Route path="/stock" element={<StockPage />} />
-        <Route path="/billing" element={<BillingPage />} />
-        <Route path="/challans" element={<ChallanManagementPage />} />
-        <Route path="/bills" element={<BillManagementPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <LanguageProvider>
+      <MobileLayout>
+        <Routes>
+          <Route path="/" element={<MobileDashboard />} />
+          <Route path="/issue" element={<MobileIssueRental />} />
+          <Route path="/return" element={<MobileReturnPage />} />
+          <Route path="/clients" element={<MobileClientsPage />} />
+          <Route path="/stock" element={<MobileStockPage />} />
+          <Route path="/ledger" element={<LedgerPage />} />
+          <Route path="/challans" element={<ChallanManagementPage />} />
+          <Route path="/bills" element={<BillManagementPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </MobileLayout>
+    </LanguageProvider>
   )
 }
 

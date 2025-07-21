@@ -1,11 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import '@fontsource/noto-sans-gujarati/400.css';
+@import '@fontsource/noto-sans-gujarati/500.css';
+@import '@fontsource/noto-sans-gujarati/600.css';
+@import '@fontsource/noto-sans-gujarati/700.css';
 
 /* Gujarati font support */
 @layer base {
   body {
-    font-family: 'Inter', 'Noto Sans Gujarati', sans-serif;
+    font-family: 'Noto Sans Gujarati', 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   /* Ensure Gujarati text renders properly */
@@ -13,6 +19,50 @@
     font-family: 'Noto Sans Gujarati', sans-serif;
     font-feature-settings: "kern" 1;
   }
+  
+  /* Mobile-first responsive design */
+  html {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Touch-friendly minimum sizes */
+  button, 
+  input[type="button"], 
+  input[type="submit"], 
+  input[type="reset"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Focus styles for accessibility */
+  *:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+  
+  /* Prevent zoom on input focus on iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Gujarati font class */
+.font-gujarati {
+  font-family: 'Noto Sans Gujarati', 'Inter', sans-serif;
 }
 
 /* Custom scrollbar for tables */
@@ -28,4 +78,43 @@
 .scrollbar-thin::-webkit-scrollbar {
   height: 8px;
   width: 8px;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 393px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Safe area support for notched devices */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }

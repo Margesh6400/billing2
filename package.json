@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/noto-sans-gujarati": "^5.2.6",
     "@react-pdf/renderer": "^4.3.0",
     "@supabase/supabase-js": "^2.52.0",
     "date-fns": "^4.1.0",
@@ -20,7 +21,8 @@
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.7.0"
+    "react-router-dom": "^7.7.0",
+    "react-to-pdf": "^2.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
