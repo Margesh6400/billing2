@@ -1,3 +1,4 @@
+// language=typescript
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
@@ -137,14 +138,14 @@ export function Dashboard() {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600">Loading business overview...</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            <div key={i} className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl animate-pulse">
+              <div className="w-3/4 h-4 mb-4 bg-gray-200 rounded"></div>
+              <div className="w-1/2 h-8 bg-gray-200 rounded"></div>
             </div>
           ))}
         </div>
@@ -156,17 +157,17 @@ export function Dashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600">Overview of your plate rental business</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <div key={index} className="p-6 transition-shadow bg-white border border-gray-200 shadow-sm rounded-xl hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
+                <p className="mb-1 text-sm font-medium text-gray-600">{stat.title}</p>
                 <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
               </div>
               <div className={`${stat.bgColor} p-3 rounded-lg`}>
@@ -178,40 +179,40 @@ export function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button className="p-4 border-2 border-dashed border-blue-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors text-center">
-            <FileText className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+      <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+        <h2 className="mb-4 text-xl font-semibold text-gray-900">Quick Actions</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <button className="p-4 text-center transition-colors border-2 border-blue-300 border-dashed rounded-lg hover:border-blue-400 hover:bg-blue-50">
+            <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600" />
             <p className="text-sm font-medium text-blue-600">New Rental</p>
           </button>
-          <button className="p-4 border-2 border-dashed border-green-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors text-center">
-            <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+          <button className="p-4 text-center transition-colors border-2 border-green-300 border-dashed rounded-lg hover:border-green-400 hover:bg-green-50">
+            <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600" />
             <p className="text-sm font-medium text-green-600">Process Return</p>
           </button>
-          <button className="p-4 border-2 border-dashed border-purple-300 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-colors text-center">
-            <Package className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+          <button className="p-4 text-center transition-colors border-2 border-purple-300 border-dashed rounded-lg hover:border-purple-400 hover:bg-purple-50">
+            <Package className="w-8 h-8 mx-auto mb-2 text-purple-600" />
             <p className="text-sm font-medium text-purple-600">Update Stock</p>
           </button>
-          <button className="p-4 border-2 border-dashed border-orange-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-colors text-center">
-            <DollarSign className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+          <button className="p-4 text-center transition-colors border-2 border-orange-300 border-dashed rounded-lg hover:border-orange-400 hover:bg-orange-50">
+            <DollarSign className="w-8 h-8 mx-auto mb-2 text-orange-600" />
             <p className="text-sm font-medium text-orange-600">Generate Bill</p>
           </button>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+      <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+        <h2 className="mb-4 text-xl font-semibold text-gray-900">Recent Activity</h2>
         <div className="space-y-4">
           {stats.activeRentals > 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="py-8 text-center text-gray-500">
               <TrendingUp className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p>Recent activity will appear here</p>
               <p className="text-sm">Start by creating your first rental</p>
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="py-8 text-center text-gray-500">
               <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p>No recent activity</p>
               <p className="text-sm">Create your first rental to get started</p>
