@@ -70,5 +70,5 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
     </div>
-  )
+ )
 }
