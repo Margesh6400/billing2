@@ -62,7 +62,7 @@ export function ChallanManagementPage() {
           challans:challans(id),
           returns:returns(id)
         `)
-        .order('name');
+        .order('id');
 
       // Transform the data to get counts
       const transformedData = data?.map(client => ({

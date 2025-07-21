@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../lib/supabase';
-import { Package, Plus, Edit3, Save, X, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Package, Plus, Edit3, Save, X, AlertTriangle, CheckCircle, Search } from 'lucide-react';
 import { T } from '../contexts/LanguageContext';
 
 type Stock = Database['public']['Tables']['stock']['Row'];
@@ -18,11 +18,125 @@ const PLATE_SIZES = [
   '2 ફુટ'
 ];
 
+interface StockRowProps {
+  plateSize: string;
+  stockData: Stock | undefined;
+  onUpdate: (plateSize: string, values: Partial<Stock>) => Promise<void>;
+}
+
+function StockRow({ plateSize, stockData, onUpdate }: StockRowProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValues, setEditValues] = useState({
+    total_quantity: stockData?.total_quantity || 0,
+    available_quantity: stockData?.available_quantity || 0,
+  });
+
+  const handleSave = async () => {
+    try {
+      await onUpdate(plateSize, editValues);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating stock:', error);
+      alert('Error updating stock. Please try again.');
+    }
+  };
+
+  const handleCancel = () => {
+    setEditValues({
+      total_quantity: stockData?.total_quantity || 0,
+      available_quantity: stockData?.available_quantity || 0,
+    });
+    setIsEditing(false);
+  };
+
+  const getAvailabilityColor = (available: number) => {
+    if (available > 20) return 'bg-green-100 text-green-800';
+    if (available > 5) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  };
+
+  return (
+    <tr className="border-b hover:bg-gray-50">
+      <td className="px-3 py-3 font-medium text-gray-900">{plateSize}</td>
+      
+      {isEditing ? (
+        <>
+          <td className="px-3 py-3">
+            <input
+              type="number"
+              min="0"
+              value={editValues.total_quantity}
+              onChange={(e) => setEditValues(prev => ({
+                ...prev, 
+                total_quantity: parseInt(e.target.value) || 0
+              }))}
+              className="w-20 px-2 py-1 text-center border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </td>
+          <td className="px-3 py-3">
+            <input
+              type="number"
+              min="0"
+              value={editValues.available_quantity}
+              onChange={(e) => setEditValues(prev => ({
+                ...prev, 
+                available_quantity: parseInt(e.target.value) || 0
+              }))}
+              className="w-20 px-2 py-1 text-center border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </td>
+          <td className="px-3 py-3 text-center text-blue-600 font-medium">
+            {stockData?.on_rent_quantity || 0}
+          </td>
+          <td className="px-3 py-3">
+            <div className="flex space-x-2">
+              <button
+                onClick={handleSave}
+                className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors"
+              >
+                <Save className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleCancel}
+                className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </td>
+        </>
+      ) : (
+        <>
+          <td className="px-3 py-3 text-center font-medium text-purple-600">
+            {stockData?.total_quantity || 0}
+          </td>
+          <td className="px-3 py-3">
+            <span className={`px-2 py-1 rounded-full text-sm font-medium ${getAvailabilityColor(stockData?.available_quantity || 0)}`}>
+              {stockData?.available_quantity || 0}
+            </span>
+          </td>
+          <td className="px-3 py-3 text-center font-medium text-blue-600">
+            {stockData?.on_rent_quantity || 0}
+          </td>
+          <td className="px-3 py-3">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors flex items-center gap-1"
+            >
+              <Edit3 className="w-4 h-4" />
+              Edit
+            </button>
+          </td>
+        </>
+      )}
+    </tr>
+  );
+}
+
 export function MobileStockPage() {
   const [stockItems, setStockItems] = useState<Stock[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [editingItem, setEditingItem] = useState<number | null>(null);
-  const [editValues, setEditValues] = useState<Partial<Stock>>({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [newPlateSize, setNewPlateSize] = useState('');
 
@@ -46,38 +160,27 @@ export function MobileStockPage() {
     }
   };
 
-  const handleEdit = (item: Stock) => {
-    setEditingItem(item.id);
-    setEditValues(item);
-  };
-
-  const handleSave = async () => {
-    if (!editingItem || !editValues) return;
-
+  const handleUpdateStock = async (plateSize: string, values: Partial<Stock>) => {
     try {
+      const stockItem = stockItems.find(item => item.plate_size === plateSize);
+      if (!stockItem) return;
+
       const { error } = await supabase
         .from('stock')
         .update({
-          total_quantity: editValues.total_quantity,
-          available_quantity: editValues.available_quantity,
+          total_quantity: values.total_quantity,
+          available_quantity: values.available_quantity,
           updated_at: new Date().toISOString()
         })
-        .eq('id', editingItem);
+        .eq('id', stockItem.id);
 
       if (error) throw error;
 
-      setEditingItem(null);
-      setEditValues({});
       await fetchStock();
     } catch (error) {
       console.error('Error updating stock:', error);
       alert('Error updating stock. Please try again.');
     }
-  };
-
-  const handleCancel = () => {
-    setEditingItem(null);
-    setEditValues({});
   };
 
   const handleAddPlateSize = async (e: React.FormEvent) => {
@@ -104,13 +207,14 @@ export function MobileStockPage() {
     }
   };
 
-  const getStockStatus = (item: Stock) => {
-    const total = item.total_quantity;
-    if (total === 0) return { status: 'empty', color: 'text-gray-500', bg: 'bg-gray-50', icon: AlertTriangle };
-    if (item.available_quantity < 10) return { status: 'low', color: 'text-red-600', bg: 'bg-red-50', icon: AlertTriangle };
-    if (item.available_quantity < 50) return { status: 'medium', color: 'text-yellow-600', bg: 'bg-yellow-50', icon: AlertTriangle };
-    return { status: 'good', color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle };
-  };
+  const stockMap = stockItems.reduce((acc, item) => {
+    acc[item.plate_size] = item;
+    return acc;
+  }, {} as Record<string, Stock>);
+
+  const filteredPlateSizes = PLATE_SIZES.filter(size =>
+    size.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -129,24 +233,37 @@ export function MobileStockPage() {
         <h1 className="text-xl font-bold text-gray-900 mb-1">
           <T>Stock</T>
         </h1>
-        <p className="text-sm text-gray-600">સ્ટોક - Manage inventory levels</p>
+        <p className="text-sm text-gray-600">સ્ટોક - Inventory Management</p>
       </div>
 
-      {/* Add New Plate Size */}
+      {/* Search and Add Controls */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Inventory Overview</h2>
+        <div className="space-y-3">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+              placeholder="Search plate sizes..."
+            />
+          </div>
+
+          {/* Add Button */}
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add Size
+            <T>Add New</T> Size
           </button>
         </div>
 
+        {/* Add Form */}
         {showAddForm && (
-          <form onSubmit={handleAddPlateSize} className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <form onSubmit={handleAddPlateSize} className="mt-4 p-3 bg-gray-50 rounded-lg">
             <div className="space-y-3">
               <select
                 value={newPlateSize}
@@ -155,7 +272,7 @@ export function MobileStockPage() {
                 required
               >
                 <option value="">Select plate size to add</option>
-                {PLATE_SIZES.filter(size => !stockItems.some(item => item.plate_size === size)).map(size => (
+                {PLATE_SIZES.filter(size => !stockMap[size]).map(size => (
                   <option key={size} value={size}>{size}</option>
                 ))}
               </select>
@@ -180,119 +297,57 @@ export function MobileStockPage() {
         )}
       </div>
 
-      {/* Stock Grid */}
-      <div className="space-y-3">
-        {stockItems.map((item) => {
-          const stockStatus = getStockStatus(item);
-          const isEditing = editingItem === item.id;
-          const StatusIcon = stockStatus.icon;
-          
-          return (
-            <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 ${stockStatus.bg}`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Package className={`w-5 h-5 ${stockStatus.color}`} />
-                  <h3 className="text-lg font-semibold text-gray-900">{item.plate_size}</h3>
-                </div>
-                
-                {!isEditing ? (
-                  <button
-                    onClick={() => handleEdit(item)}
-                    className="text-blue-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition-colors"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <div className="flex gap-1">
-                    <button
-                      onClick={handleSave}
-                      className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-green-50 transition-colors"
-                    >
-                      <Save className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      <T>Available</T>
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        min="0"
-                        value={editValues.available_quantity || 0}
-                        onChange={(e) => setEditValues({
-                          ...editValues,
-                          available_quantity: parseInt(e.target.value) || 0
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-medium"
-                      />
-                    ) : (
-                      <p className={`text-2xl font-bold ${stockStatus.color}`}>
-                        {item.available_quantity}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      <T>On Rent</T>
-                    </label>
-                    <p className="text-2xl font-bold text-blue-600">{item.on_rent_quantity}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <T>Total Quantity</T>
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      min="0"
-                      value={editValues.total_quantity || 0}
-                      onChange={(e) => setEditValues({
-                        ...editValues,
-                        total_quantity: parseInt(e.target.value) || 0
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-medium"
-                    />
-                  ) : (
-                    <p className="text-2xl font-bold text-purple-600">{item.total_quantity}</p>
-                  )}
-                </div>
-
-                {/* Stock Status Indicator */}
-                <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
-                  <StatusIcon className={`w-4 h-4 ${stockStatus.color.replace('text-', 'text-')}`} />
-                  <span className={`text-sm font-medium ${stockStatus.color}`}>
-                    {stockStatus.status === 'low' && 'Low Stock'}
-                    {stockStatus.status === 'medium' && 'Medium Stock'}
-                    {stockStatus.status === 'good' && 'Good Stock'}
-                    {stockStatus.status === 'empty' && 'No Stock'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      {/* Stock Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Package className="w-5 h-5 text-blue-600" />
+            Stock Management
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">Click Edit to update quantities</p>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-3 py-3 text-left text-sm font-medium text-gray-700">
+                  Plate Size
+                </th>
+                <th className="px-3 py-3 text-center text-sm font-medium text-gray-700">
+                  Total Stock
+                </th>
+                <th className="px-3 py-3 text-center text-sm font-medium text-gray-700">
+                  Available
+                </th>
+                <th className="px-3 py-3 text-center text-sm font-medium text-gray-700">
+                  On Rent
+                </th>
+                <th className="px-3 py-3 text-center text-sm font-medium text-gray-700">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPlateSizes.map((plateSize) => (
+                <StockRow
+                  key={plateSize}
+                  plateSize={plateSize}
+                  stockData={stockMap[plateSize]}
+                  onUpdate={handleUpdateStock}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {stockItems.length === 0 && (
+      {filteredPlateSizes.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
           <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500">No plate sizes configured</p>
-          <p className="text-sm text-gray-400 mt-1">Add your first plate size to get started</p>
+          <p className="text-gray-500">
+            {searchTerm ? 'No matching plate sizes found' : 'No plate sizes configured'}
+          </p>
         </div>
       )}
     </div>

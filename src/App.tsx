@@ -8,7 +8,7 @@ import { MobileIssueRental } from './components/MobileIssueRental'
 import { MobileReturnPage } from './components/MobileReturnPage'
 import { MobileClientsPage } from './components/MobileClientsPage'
 import { MobileStockPage } from './components/MobileStockPage'
-import { LedgerPage } from './components/LedgerPage'
+import { MobileLedgerPage } from './components/mobile/MobileLedgerPage'
 import { BillingPage } from './components/BillingPage'
 import { ChallanManagementPage } from './components/ChallanManagementPage'
 import { BillManagementPage } from './components/BillManagementPage'
@@ -42,7 +42,7 @@ function App() {
           <Route path="/return" element={<MobileReturnPage />} />
           <Route path="/clients" element={<MobileClientsPage />} />
           <Route path="/stock" element={<MobileStockPage />} />
-          <Route path="/ledger" element={<LedgerPage />} />
+          <Route path="/ledger" element={<MobileLedgerPage />} />
           <Route path="/challans" element={<ChallanManagementPage />} />
           <Route path="/bills" element={<BillManagementPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

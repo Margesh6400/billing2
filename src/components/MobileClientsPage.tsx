@@ -28,7 +28,7 @@ export function MobileClientsPage() {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('id');
 
       if (error) throw error;
       setClients(data || []);

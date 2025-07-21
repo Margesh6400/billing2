@@ -40,7 +40,7 @@ export function BillingPage() {
   const fetchData = async () => {
     try {
       const [clientsResult, billsResult] = await Promise.all([
-        supabase.from('clients').select('*').order('name'),
+        supabase.from('clients').select('*').order('id'),
         supabase.from('bills').select(`
           *,
           clients (*)

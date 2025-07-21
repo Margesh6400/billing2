@@ -31,7 +31,7 @@ export function ClientSelector({ onClientSelect, selectedClient }: ClientSelecto
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('id')
 
       if (error) throw error
       setClients(data || [])

@@ -102,7 +102,7 @@ export function LedgerPage() {
       const { data: clients, error: clientsError } = await supabase
         .from('clients')
         .select('*')
-        .order('name')
+        .order('id')
 
       if (clientsError) throw clientsError
 
