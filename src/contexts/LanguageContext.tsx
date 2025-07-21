@@ -22,6 +22,38 @@ const translations = {
   'Bills': { gu: 'બિલ', en: 'Bills' },
   'Ledger': { gu: 'ખાતાવહી', en: 'Ledger' },
   
+  // Dashboard specific
+  'સેન્ટરિંગ પ્લેટ્સ ભાડા': { gu: 'સેન્ટરિંગ પ્લેટ્સ ભાડા', en: 'Centering Plates Rental' },
+  'ઉધાર ચાલતી છે': { gu: 'ઉધાર ચાલતી છે', en: 'Active Udhar' },
+  'બાકી જમા': { gu: 'બાકી જમા', en: 'Pending Returns' },
+  'ભાડે પ્લેટ્સ': { gu: 'ભાડે પ્લેટ્સ', en: 'On-Rent Plates' },
+  'કુલ ગ્રાહકો': { gu: 'કુલ ગ્રાહકો', en: 'Total Clients' },
+  'કમસ્ટોક પ્લેટ્સ': { gu: 'કમસ્ટોક પ્લેટ્સ', en: 'Low Stock Plates' },
+  'ઝડપી ક્રિયાઓ': { gu: 'ઝડપી ક્રિયાઓ', en: 'Quick Actions' },
+  'ઉધાર ચલણ બનાવો': { gu: 'ઉધાર ચલણ બનાવો', en: 'Create Udhar Challan' },
+  'જમા ચલણ બનાવો': { gu: 'જમા ચલણ બનાવો', en: 'Create Jama Challan' },
+  'નવો ગ્રાહક': { gu: 'નવો ગ્રાહક', en: 'Add Client' },
+  'સ્ટોક સુધારો': { gu: 'સ્ટોક સુધારો', en: 'Edit Stock' },
+  'તાજેતરની પ્રવૃત્તિ': { gu: 'તાજેતરની પ્રવૃત્તિ', en: 'Recent Activity' },
+  'ચલતી છે': { gu: 'ચલતી છે', en: 'Active' },
+  'પરત': { gu: 'પરત', en: 'Returned' },
+  'બધી પ્રવૃત્તિ જુઓ': { gu: 'બધી પ્રવૃત્તિ જુઓ', en: 'View All Activity' },
+  'મુદત વીતી ગઈ છે': { gu: 'મુદત વીતી ગઈ છે', en: 'Overdue' },
+  'પ્લેટ્સ પરત કરવાનો સમય થયો છે': { gu: 'પ્લેટ્સ પરત કરવાનો સમય થયો છે', en: 'Time to return plates' },
+  'સ્ટોક ઓછો છે': { gu: 'સ્ટોક ઓછો છે', en: 'Stock is low' },
+  'માત્ર': { gu: 'માત્ર', en: 'Only' },
+  'પ્લેટ્સ બાકી છે': { gu: 'પ્લેટ્સ બાકી છે', en: 'plates remaining' },
+  'હમણાં જ': { gu: 'હમણાં જ', en: 'Just now' },
+  'કલાક પહેલાં': { gu: 'કલાક પહેલાં', en: 'hours ago' },
+  'દિવસ પહેલાં': { gu: 'દિવસ પહેલાં', en: 'days ago' },
+  'કોઈ તાજેતરની પ્રવૃત્તિ નથી': { gu: 'કોઈ તાજેતરની પ્રવૃત્તિ નથી', en: 'No recent activity' },
+  'નવું ચલણ બનાવવા માટે શરૂ કરો': { gu: 'નવું ચલણ બનાવવા માટે શરૂ કરો', en: 'Start by creating a new challan' },
+  'મેનુ': { gu: 'મેનુ', en: 'Menu' },
+  'વપરાશકર્તા': { gu: 'વપરાશકર્તા', en: 'User' },
+  'ઇમેઇલ બતાવો': { gu: 'ઇમેઇલ બતાવો', en: 'Show Email' },
+  'સેટિંગ્સ': { gu: 'સેટિંગ્સ', en: 'Settings' },
+  'સાઇન આઉટ': { gu: 'સાઇન આઉટ', en: 'Sign Out' },
+  
   // Challan Management
   'Challan Management': { gu: 'ચલણ વ્યવસ્થાપન', en: 'Challan Management' },
   'Udhar Challans': { gu: 'ઉધાર ચલણ', en: 'Udhar Challans' },
@@ -127,7 +159,7 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem('language');
-    return (saved as Language) || 'gu';
+    return (saved as Language) || 'gu'; // Default to Gujarati
   });
 
   useEffect(() => {

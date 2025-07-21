@@ -1,28 +1,26 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { 
-  Menu, X, LogOut, User, Globe, Settings,
+  Menu, X, LogOut, User, Settings,
   FileText, Users, Package, Receipt, DollarSign, BarChart3, Home, RotateCcw
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-import { useTranslation, T } from '../contexts/LanguageContext'
 
 const NAVIGATION_ITEMS = [
-  { key: 'dashboard', labelKey: 'Dashboard', icon: Home, path: '/' },
-  { key: 'issue', labelKey: 'Issue', icon: FileText, path: '/issue' },
-  { key: 'return', labelKey: 'Return', icon: RotateCcw, path: '/return' },
-  { key: 'clients', labelKey: 'Clients', icon: Users, path: '/clients' },
-  { key: 'stock', labelKey: 'Stock', icon: Package, path: '/stock' },
-  { key: 'challans', labelKey: 'Challan Management', icon: Receipt, path: '/challans' },
-  { key: 'bills', labelKey: 'Bills', icon: DollarSign, path: '/bills' },
-  { key: 'ledger', labelKey: 'Ledger', icon: BarChart3, path: '/ledger' }
+  { key: 'dashboard', label: 'ડેશબોર્ડ', icon: Home, path: '/' },
+  { key: 'issue', label: 'ઉધાર', icon: FileText, path: '/issue' },
+  { key: 'return', label: 'જમા', icon: RotateCcw, path: '/return' },
+  { key: 'clients', label: 'ગ્રાહકો', icon: Users, path: '/clients' },
+  { key: 'stock', label: 'સ્ટોક', icon: Package, path: '/stock' },
+  { key: 'challans', label: 'ચલણ વ્યવસ્થાપન', icon: Receipt, path: '/challans' },
+  { key: 'bills', label: 'બિલ', icon: DollarSign, path: '/bills' },
+  { key: 'ledger', label: 'ખાતાવહી', icon: BarChart3, path: '/ledger' }
 ]
 
 export function MobileNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showUserEmail, setShowUserEmail] = useState(false)
   const { user, signOut } = useAuth()
-  const { language, setLanguage } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -69,15 +67,11 @@ export function MobileNavbar() {
     return location.pathname.startsWith(path)
   }
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'gu' ? 'en' : 'gu')
-  }
-
   return (
     <>
       {/* TOP BAR - Always Visible */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg font-noto-gujarati">
-        <div className="flex items-center justify-between px-4 h-14">
+        <div className="flex items-center justify-between px-4 h-16">
           {/* Hamburger Menu Button */}
           <button
             onClick={() => setIsMenuOpen(true)}
@@ -89,22 +83,18 @@ export function MobileNavbar() {
 
           {/* App Title */}
           <div className="text-center">
-            <h1 className="text-lg font-bold text-white leading-tight">
-              <T>NO WERE TECH</T>
+            <h1 className="text-xl font-bold text-white leading-tight">
+              NO WERE TECH
             </h1>
+            <p className="text-xs text-blue-100">સેન્ટરિંગ પ્લેટ્સ ભાડા</p>
           </div>
 
-          {/* Language Toggle */}
-          <button
-            onClick={toggleLanguage}
-            className="p-2 rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            aria-label="Change language"
-          >
-            <Globe className="w-5 h-5 text-white mr-1" />
-            <span className="text-sm font-medium text-white">
-              {language === 'gu' ? 'ગુ' : 'EN'}
+          {/* User Avatar */}
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <span className="text-white font-semibold text-sm">
+              {getUserInitials()}
             </span>
-          </button>
+          </div>
         </div>
       </header>
 
@@ -121,9 +111,7 @@ export function MobileNavbar() {
           <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out">
             {/* Menu Header */}
             <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-              <h2 className="text-lg font-semibold">
-                <T>Menu</T>
-              </h2>
+              <h2 className="text-lg font-semibold">મેનુ</h2>
               <button
                 onClick={() => setIsMenuOpen(false)}
                 className="p-2 rounded-lg hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -144,7 +132,7 @@ export function MobileNavbar() {
                 {/* User Details */}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 truncate">
-                    {user?.user_metadata?.name || 'User'}
+                    {user?.user_metadata?.name || 'વપરાશકર્તા'}
                   </p>
                   
                   {/* Email Toggle */}
@@ -155,7 +143,7 @@ export function MobileNavbar() {
                     {showUserEmail ? (
                       <span className="truncate">{user?.email}</span>
                     ) : (
-                      <T>Show Email</T>
+                      'ઇમેઇલ બતાવો'
                     )}
                   </button>
                 </div>
@@ -175,9 +163,7 @@ export function MobileNavbar() {
                   }`}
                 >
                   <item.icon className="w-6 h-6 flex-shrink-0" />
-                  <span className="truncate">
-                    <T>{item.labelKey}</T>
-                  </span>
+                  <span className="truncate">{item.label}</span>
                 </Link>
               ))}
             </nav>
@@ -189,7 +175,7 @@ export function MobileNavbar() {
                 className="w-full flex items-center space-x-4 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors min-h-[48px]"
               >
                 <Settings className="w-5 h-5" />
-                <T>Settings</T>
+                સેટિંગ્સ
               </button>
 
               <button
@@ -197,7 +183,7 @@ export function MobileNavbar() {
                 className="w-full flex items-center space-x-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors min-h-[48px]"
               >
                 <LogOut className="w-5 h-5" />
-                <T>Sign Out</T>
+                સાઇન આઉટ
               </button>
             </div>
           </div>
@@ -219,7 +205,7 @@ export function MobileNavbar() {
             >
               <item.icon className={`w-5 h-5 ${isActivePath(item.path) ? 'animate-pulse' : ''}`} />
               <span className="text-xs font-medium truncate px-1">
-                <T>{item.labelKey}</T>
+                {item.label}
               </span>
             </Link>
           ))}
@@ -227,7 +213,7 @@ export function MobileNavbar() {
       </nav>
 
       {/* Top spacing for content */}
-      <div className="h-14" />
+      <div className="h-16" />
       
       {/* Bottom spacing for content */}
       <div className="h-16" />
