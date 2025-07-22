@@ -109,42 +109,42 @@ export function MobileReturnPage() {
       const { data, error } = await supabase
         .from('returns')
         .select('return_challan_number')
-        .order('id', { ascending: false })
+        .order('id', { ascending: false });
 
-      if (error) throw error
+      if (error) throw error;
 
-      let maxNumber = 0
+      let maxNumber = 0;
       if (data && data.length > 0) {
         // Extract all numeric values and find the absolute maximum
         data.forEach(returnChallan => {
-          const match = returnChallan.return_challan_number.match(/\d+/)
+          const match = returnChallan.return_challan_number.match(/\d+/);
           if (match) {
-            const num = parseInt(match[0])
+            const num = parseInt(match[0]);
             if (num > maxNumber) {
-              maxNumber = num
+              maxNumber = num;
             }
           }
-        })
+        });
       }
 
       // Always increment by 1 from the highest found number
-      const nextNumber = (maxNumber + 1).toString()
-      setSuggestedChallanNumber(nextNumber)
+      const nextNumber = (maxNumber + 1).toString();
+      setSuggestedChallanNumber(nextNumber);
       
       // Set as default only if current challan number is empty
       if (!returnChallanNumber) {
-        setReturnChallanNumber(nextNumber)
+        setReturnChallanNumber(nextNumber);
       }
     } catch (error) {
-      console.error('Error generating return challan number:', error)
+      console.error('Error generating return challan number:', error);
       // Fallback to timestamp-based number
-      const fallback = '1'
-      setSuggestedChallanNumber(fallback)
+      const fallback = '1';
+      setSuggestedChallanNumber(fallback);
       if (!returnChallanNumber) {
-        setReturnChallanNumber(fallback)
+        setReturnChallanNumber(fallback);
       }
     }
-  }
+  };
 
   const handleChallanNumberChange = (value: string) => {
     setReturnChallanNumber(value);
@@ -572,55 +572,5 @@ function ReturnClientSelector({ onClientSelect }: ReturnClientSelectorProps) {
         )}
       </div>
     </div>
-  );
-}
-
-        onClientSelect={setSelectedClient}
-        selectedClient={selectedClient}
-      />
-
-      {/* Return Form */}
-      {selectedClient && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <RotateCcw className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              <T>Return Plates</T>
-            </h2>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Return Details */}
-            <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Return Challan Number *
-                </label>
-                <input
-                  type="text"
-                  value={returnChallanNumber}
-                  onChange={(e) => handleChallanNumberChange(e.target.value)}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                  placeholder={`Suggested: ${suggestedChallanNumber}`}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <T>Return Date</T> *
-                </label>
-                <input
-                  type="date"
-                  value={returnDate}
-                  onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Plates List */}
   );
 }
