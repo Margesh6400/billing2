@@ -10,7 +10,8 @@ import {
   Download,
   FileDown,
   Phone,
-  MapPin
+  MapPin,
+  BookOpen
 } from 'lucide-react';
 import { T } from '../../contexts/LanguageContext';
 import { PrintableChallan } from '../challans/PrintableChallan';
@@ -298,16 +299,16 @@ export function MobileLedgerPage() {
 
   if (loading) {
     return (
-      <div className="bg-gray-50 pb-20">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 pb-20">
         <div className="p-3 space-y-3">
           <div className="text-center pt-2">
-            <div className="h-5 bg-gray-200 rounded w-32 mx-auto mb-1 animate-pulse"></div>
-            <div className="h-3 bg-gray-200 rounded w-40 mx-auto animate-pulse"></div>
+            <div className="h-5 bg-blue-200 rounded w-32 mx-auto mb-1 animate-pulse"></div>
+            <div className="h-3 bg-blue-200 rounded w-40 mx-auto animate-pulse"></div>
           </div>
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg shadow-sm p-3 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            <div key={i} className="bg-white rounded-lg shadow-sm p-3 animate-pulse border border-blue-100">
+              <div className="h-4 bg-blue-200 rounded w-2/3 mb-2"></div>
+              <div className="h-3 bg-blue-200 rounded w-1/2"></div>
             </div>
           ))}
         </div>
@@ -316,7 +317,7 @@ export function MobileLedgerPage() {
   }
 
   return (
-    <div className="bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50 pb-20">
       {/* Hidden Printable Challan */}
       <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
         {challanData && (
@@ -327,55 +328,63 @@ export function MobileLedgerPage() {
       </div>
 
       <div className="p-3 space-y-4">
-        {/* Compact Header */}
+        {/* Blue Themed Header */}
         <div className="text-center pt-2">
-          <h1 className="text-lg font-bold text-gray-900 mb-1">ખાતાવહી</h1>
-          <p className="text-xs text-gray-600">ગ્રાહક ભાડા ઇતિહાસ</p>
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-2 shadow-lg">
+            <BookOpen className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-base font-bold text-gray-900 mb-1">ખાતાવહી</h1>
+          <p className="text-xs text-blue-600">ગ્રાહક ભાડા ઇતિહાસ</p>
         </div>
 
-        {/* Compact Backup Button */}
+        {/* Blue Themed Backup Button */}
         <div className="flex justify-center">
           <button
             onClick={handleBackupData}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             <FileDown className="w-4 h-4" />
             બેકઅપ
           </button>
         </div>
 
-        {/* Compact Search Bar */}
+        {/* Blue Themed Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-3 py-2 border-2 border-blue-200 rounded-lg text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-white"
             placeholder="ગ્રાહક શોધો..."
           />
         </div>
 
-        {/* Compact Client Cards */}
+        {/* Blue Themed Client Cards */}
         <div className="space-y-2">
           {filteredLedgers.map((ledger) => (
-            <div key={ledger.client.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              {/* Compact Client Header */}
+            <div key={ledger.client.id} className="bg-white rounded-xl shadow-lg border-2 border-blue-100 overflow-hidden hover:shadow-xl hover:border-blue-200 transition-all duration-200">
+              {/* Blue Themed Client Header */}
               <div 
-                className="p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                className="p-3 cursor-pointer hover:bg-blue-50 transition-colors"
                 onClick={() => toggleExpanded(ledger.client.id)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-sm truncate">
-                      {ledger.client.name} ({ledger.client.id})
-                    </h3>
-                    <div className="flex items-center gap-3 mt-1">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                        {ledger.client.name.charAt(0).toUpperCase()}
+                      </div>
+                      <h3 className="font-semibold text-gray-900 text-sm truncate">
+                        {ledger.client.name} ({ledger.client.id})
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-3 ml-8">
+                      <div className="flex items-center gap-1 text-xs text-blue-600">
                         <MapPin className="w-3 h-3" />
                         <span className="truncate">{ledger.client.site}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <div className="flex items-center gap-1 text-xs text-blue-600">
                         <Phone className="w-3 h-3" />
                         <span>{ledger.client.mobile_number}</span>
                       </div>
@@ -383,32 +392,36 @@ export function MobileLedgerPage() {
                   </div>
                   
                   <div className="flex items-center gap-2 ml-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
                       ledger.total_outstanding > 0 
-                        ? 'bg-red-100 text-red-700' 
-                        : 'bg-green-100 text-green-700'
+                        ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' 
+                        : 'bg-gradient-to-r from-green-500 to-green-600 text-white'
                     }`}>
                       {ledger.total_outstanding > 0 
                         ? `${ledger.total_outstanding} બાકી` 
                         : 'પૂર્ણ'
                       }
                     </span>
-                    {expandedClient === ledger.client.id ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                    )}
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      {expandedClient === ledger.client.id ? (
+                        <ChevronUp className="w-4 h-4 text-blue-600" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-blue-600" />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Compact Expanded Details */}
+              {/* Blue Themed Expanded Details */}
               {expandedClient === ledger.client.id && (
-                <div className="border-t border-gray-200 bg-gray-50">
+                <div className="border-t-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
                   {!ledger.has_activity ? (
-                    <div className="p-4 text-center text-gray-500">
-                      <Package className="w-6 h-6 mx-auto mb-2 text-gray-300" />
-                      <p className="text-sm">કોઈ પ્રવૃત્તિ નથી</p>
+                    <div className="p-6 text-center text-gray-500">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Package className="w-6 h-6 text-blue-400" />
+                      </div>
+                      <p className="text-sm font-medium">કોઈ પ્રવૃત્તિ નથી</p>
                     </div>
                   ) : (
                     <CompactActivityTable 
@@ -423,10 +436,15 @@ export function MobileLedgerPage() {
           ))}
 
           {filteredLedgers.length === 0 && !loading && (
-            <div className="text-center py-6 bg-white rounded-lg shadow-sm">
-              <User className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm text-gray-500">
+            <div className="text-center py-8 bg-white rounded-xl shadow-lg border-2 border-blue-100">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-blue-400" />
+              </div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">
                 {searchTerm ? 'કોઈ ગ્રાહક મળ્યો નથી' : 'કોઈ ગ્રાહક નથી'}
+              </p>
+              <p className="text-xs text-blue-600">
+                {searchTerm ? 'શોધ શબ્દ બદલીને પ્રયત્ન કરો' : 'નવા ગ્રાહકો ઉમેરો'}
               </p>
             </div>
           )}
@@ -436,7 +454,7 @@ export function MobileLedgerPage() {
   );
 }
 
-// Updated Compact Activity Table Component
+// Compact Activity Table with REDUCED SPACING between challan rows
 interface CompactActivityTableProps {
   ledger: ClientLedger;
   onDownloadChallan: (transaction: any, type: 'udhar' | 'jama') => void;
@@ -461,64 +479,66 @@ function CompactActivityTable({ ledger, onDownloadChallan, downloading }: Compac
 
   return (
     <div className="p-3">
-      {/* Compact Header */}
+      {/* Blue Themed Header */}
       <div className="flex items-center gap-2 mb-3">
-        <Package className="w-4 h-4 text-blue-600" />
+        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+          <Package className="w-3 h-3 text-white" />
+        </div>
         <h4 className="text-sm font-semibold text-gray-900">પ્લેટ પ્રવૃત્તિ</h4>
       </div>
       
-      {/* Updated Table with Date and Download Columns */}
-      <div className="bg-white rounded-lg border overflow-hidden">
+      {/* Compact Table with REDUCED row spacing */}
+      <div className="bg-white rounded-lg border-2 border-blue-100 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="sticky left-0 bg-gray-100 px-2 py-2 text-left font-medium text-gray-700 min-w-[60px]">
+              <tr className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                <th className="sticky left-0 bg-gradient-to-r from-blue-500 to-indigo-500 px-1 py-1.5 text-left font-bold min-w-[60px]">
                   <div className="text-xs">ચલણ નં.</div>
                 </th>
-                <th className="px-2 py-2 text-center font-medium text-gray-700 min-w-[60px] border-l border-gray-200">
+                <th className="px-1 py-1.5 text-center font-bold min-w-[60px] border-l border-blue-400">
                   <div className="text-xs">તારીખ</div>
                 </th>
                 {activePlateSizes.map(size => (
-                  <th key={size} className="px-2 py-2 text-center font-medium text-gray-700 min-w-[50px] border-l border-gray-200">
-                    <div className="text-xs font-semibold">{size}</div>
+                  <th key={size} className="px-1 py-1.5 text-center font-bold min-w-[50px] border-l border-blue-400">
+                    <div className="text-xs">{size}</div>
                   </th>
                 ))}
-                <th className="px-2 py-2 text-center font-medium text-gray-700 min-w-[50px] border-l border-gray-200">
+                <th className="px-1 py-1.5 text-center font-bold min-w-[50px] border-l border-blue-400">
                   <div className="text-xs">ડાઉનલોડ</div>
                 </th>
               </tr>
             </thead>
             <tbody>
               {/* Current Balance Row */}
-              <tr className="bg-blue-50 border-b border-blue-200">
-                <td className="sticky left-0 bg-blue-50 px-2 py-2 font-medium text-blue-900 border-r border-blue-200">
+              <tr className="bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-200">
+                <td className="sticky left-0 bg-gradient-to-r from-blue-100 to-indigo-100 px-1 py-1.5 font-bold text-blue-900 border-r border-blue-200">
                   <div className="text-xs">વર્તમાન બેલેન્સ</div>
                 </td>
-                <td className="px-2 py-2 text-center border-l border-blue-200">
-                  <div className="text-xs text-blue-700">-</div>
+                <td className="px-1 py-1.5 text-center border-l border-blue-200">
+                  <div className="text-xs text-blue-700 font-semibold">-</div>
                 </td>
                 {activePlateSizes.map(size => {
                   const balance = getCurrentBalance(size);
                   return (
-                    <td key={size} className="px-2 py-2 text-center border-l border-blue-200">
+                    <td key={size} className="px-1 py-1.5 text-center border-l border-blue-200">
                       <span className={`font-bold text-sm ${
-                        balance > 0 ? 'text-red-600' : balance < 0 ? 'text-green-600' : 'text-gray-400'
+                        balance > 0 ? 'text-red-600' : balance < 0 ? 'text-green-600' : 'text-blue-400'
                       }`}>
                         {balance !== 0 ? balance : ''}
                       </span>
                     </td>
                   );
                 })}
-                <td className="px-2 py-2 text-center border-l border-blue-200">
-                  <div className="text-xs text-blue-700">-</div>
+                <td className="px-1 py-1.5 text-center border-l border-blue-200">
+                  <div className="text-xs text-blue-700 font-semibold">-</div>
                 </td>
               </tr>
 
-              {/* Transaction Rows */}
+              {/* REDUCED SPACING: Transaction Rows with minimal padding */}
               {ledger.all_transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={activePlateSizes.length + 3} className="px-2 py-4 text-center text-gray-500">
+                  <td colSpan={activePlateSizes.length + 3} className="px-1 py-4 text-center text-blue-500">
                     <div className="text-xs">કોઈ ચલણ નથી</div>
                   </td>
                 </tr>
@@ -526,12 +546,12 @@ function CompactActivityTable({ ledger, onDownloadChallan, downloading }: Compac
                 ledger.all_transactions.map((transaction) => (
                   <tr 
                     key={`${transaction.type}-${transaction.id}`}
-                    className={`border-b hover:bg-gray-50 ${
+                    className={`border-b border-blue-100 hover:bg-blue-25 transition-colors ${
                       transaction.type === 'udhar' ? 'bg-yellow-50' : 'bg-green-50'
                     }`}
                   >
-                    {/* Challan Number Column */}
-                    <td className={`sticky left-0 px-2 py-2 border-r border-gray-200 ${
+                    {/* REDUCED SPACING: Changed from px-2 py-2 to px-1 py-0.5 */}
+                    <td className={`sticky left-0 px-1 py-0.5 border-r border-blue-100 ${
                       transaction.type === 'udhar' ? 'bg-yellow-50' : 'bg-green-50'
                     }`}>
                       <div className="font-semibold text-gray-900 text-xs">
@@ -539,9 +559,9 @@ function CompactActivityTable({ ledger, onDownloadChallan, downloading }: Compac
                       </div>
                     </td>
                     
-                    {/* Date Column */}
-                    <td className="px-2 py-2 text-center border-l border-gray-200">
-                      <div className="text-xs text-gray-600">
+                    {/* Date Column - REDUCED SPACING */}
+                    <td className="px-1 py-0.5 text-center border-l border-blue-100">
+                      <div className="text-xs text-blue-600 font-medium">
                         {(() => {
                           const d = new Date(transaction.date);
                           const day = d.getDate().toString().padStart(2, '0');
@@ -551,11 +571,11 @@ function CompactActivityTable({ ledger, onDownloadChallan, downloading }: Compac
                       </div>
                     </td>
                     
-                    {/* Plate Size Columns */}
+                    {/* Plate Size Columns - REDUCED SPACING */}
                     {activePlateSizes.map(size => {
                       const quantity = getTransactionQuantity(transaction, size);
                       return (
-                        <td key={size} className="px-2 py-2 text-center border-l border-gray-200">
+                        <td key={size} className="px-1 py-0.5 text-center border-l border-blue-100">
                           {quantity > 0 && (
                             <span className={`font-bold text-sm ${
                               transaction.type === 'udhar' ? 'text-yellow-700' : 'text-green-700'
@@ -567,15 +587,15 @@ function CompactActivityTable({ ledger, onDownloadChallan, downloading }: Compac
                       );
                     })}
                     
-                    {/* Download Column */}
-                    <td className="px-2 py-2 text-center border-l border-gray-200">
+                    {/* Download Column - REDUCED SPACING */}
+                    <td className="px-1 py-0.5 text-center border-l border-blue-100">
                       <button
                         onClick={() => onDownloadChallan(transaction, transaction.type)}
                         disabled={downloading === `${transaction.type}-${transaction.id}`}
-                        className={`p-1 rounded transition-colors ${
+                        className={`p-0.5 rounded-full transition-all duration-200 hover:shadow-md ${
                           transaction.type === 'udhar'
-                            ? 'text-yellow-600 hover:bg-yellow-200'
-                            : 'text-green-600 hover:bg-green-200'
+                            ? 'text-yellow-600 hover:bg-yellow-200 hover:text-yellow-700'
+                            : 'text-green-600 hover:bg-green-200 hover:text-green-700'
                         } disabled:opacity-50`}
                       >
                         <Download className="w-3 h-3" />
@@ -586,6 +606,24 @@ function CompactActivityTable({ ledger, onDownloadChallan, downloading }: Compac
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Blue Themed Legend */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border-t-2 border-blue-100">
+          <div className="flex flex-wrap justify-center gap-4 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 bg-yellow-400 rounded-full shadow-sm"></div>
+              <span className="font-medium text-blue-700">ઉધાર (Issue)</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 bg-green-400 rounded-full shadow-sm"></div>
+              <span className="font-medium text-blue-700">જમા (Return)</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 bg-blue-400 rounded-full shadow-sm"></div>
+              <span className="font-medium text-blue-700">વર્તમાન બેલેન્સ (Balance)</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
