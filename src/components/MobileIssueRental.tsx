@@ -69,45 +69,46 @@ export function MobileIssueRental() {
 
   const generateNextChallanNumber = async () => {
     try {
-      // Fetch all existing issue challans to find the highest number
+      // Fetch all existing issue challans to find the highest numeric value
       const { data, error } = await supabase
         .from('challans')
         .select('challan_number')
-        .order('id', { ascending: false });
+        .order('id', { ascending: false })
 
-      if (error) throw error;
+      if (error) throw error
 
-      let maxNumber = 0;
+      let maxNumber = 0
       if (data && data.length > 0) {
-        // Extract numeric values from challan numbers and find the maximum
+        // Extract all numeric values and find the absolute maximum
         data.forEach(challan => {
-          const match = challan.challan_number.match(/\d+/);
+          const match = challan.challan_number.match(/\d+/)
           if (match) {
-            const num = parseInt(match[0]);
+            const num = parseInt(match[0])
             if (num > maxNumber) {
-              maxNumber = num;
+              maxNumber = num
             }
           }
-        });
+        })
       }
 
-      const nextNumber = (maxNumber + 1).toString();
-      setSuggestedChallanNumber(nextNumber);
+      // Always increment by 1 from the highest found number
+      const nextNumber = (maxNumber + 1).toString()
+      setSuggestedChallanNumber(nextNumber)
       
       // Set as default only if current challan number is empty
       if (!challanNumber) {
-        setChallanNumber(nextNumber);
+        setChallanNumber(nextNumber)
       }
     } catch (error) {
-      console.error('Error generating challan number:', error);
+      console.error('Error generating challan number:', error)
       // Fallback to timestamp-based number
-      const fallback = Date.now().toString().slice(-6);
-      setSuggestedChallanNumber(fallback);
+      const fallback = '1'
+      setSuggestedChallanNumber(fallback)
       if (!challanNumber) {
-        setChallanNumber(fallback);
+        setChallanNumber(fallback)
       }
     }
-  };
+  }
 
   const handleChallanNumberChange = (value: string) => {
     setChallanNumber(value);

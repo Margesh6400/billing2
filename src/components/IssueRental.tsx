@@ -68,7 +68,7 @@ export function IssueRental() {
 
   const generateNextChallanNumber = async () => {
     try {
-      // Fetch all existing issue challans to find the highest number
+      // Fetch all existing issue challans to find the highest numeric value
       const { data, error } = await supabase
         .from('challans')
         .select('challan_number')
@@ -78,7 +78,7 @@ export function IssueRental() {
 
       let maxNumber = 0
       if (data && data.length > 0) {
-        // Extract numeric values from challan numbers and find the maximum
+        // Extract all numeric values and find the absolute maximum
         data.forEach(challan => {
           const match = challan.challan_number.match(/\d+/)
           if (match) {
@@ -90,6 +90,7 @@ export function IssueRental() {
         })
       }
 
+      // Always increment by 1 from the highest found number
       const nextNumber = (maxNumber + 1).toString()
       setSuggestedChallanNumber(nextNumber)
       
@@ -99,8 +100,8 @@ export function IssueRental() {
       }
     } catch (error) {
       console.error('Error generating challan number:', error)
-      // Fallback to timestamp-based number
-      const fallback = Date.now().toString().slice(-6)
+      // Fallback to starting from 1
+      const fallback = '1'
       setSuggestedChallanNumber(fallback)
       if (!challanNumber) {
         setChallanNumber(fallback)
