@@ -305,93 +305,7 @@ export function MobileLedgerPage() {
                     <p className="text-sm">No rental activity yet</p>
                   </div>
                 ) : (
-                  <>
-                    {/* Outstanding Summary */}
-                    <div className="bg-white rounded-lg p-3">
-                      <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                        <Package className="w-4 h-4 text-red-600" />
-                        Outstanding Plates:
-                      </h4>
-                      {Object.keys(ledger.plate_balances.filter(b => b.outstanding > 0)).length === 0 ? (
-                        <div className="flex items-center gap-2 text-green-600">
-                          <CheckCircle className="w-4 h-4" />
-                          <span className="text-sm">✅ All plates returned</span>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                          {ledger.plate_balances
-                            .filter(balance => balance.outstanding > 0)
-                            .map((balance) => (
-                              <div key={balance.plate_size} className="bg-red-50 border border-red-200 rounded p-2 text-center">
-                                <div className="text-xs text-gray-600">{balance.plate_size}</div>
-                                <div className="font-bold text-red-600">{balance.outstanding}</div>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Active Rentals */}
-                    <div className="bg-white rounded-lg p-3">
-                      <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-yellow-600" />
-                        Active Rentals:
-                      </h4>
-                      {ledger.active_challans.length === 0 ? (
-                        <p className="text-sm text-gray-500">No active rentals</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {ledger.active_challans.map((activeChallan) => (
-                            <div key={activeChallan.challan.id} className="bg-yellow-50 border border-yellow-200 rounded p-2">
-                              <div className="flex justify-between items-start mb-1">
-                                <span className="font-medium text-sm">#{activeChallan.challan.challan_number}</span>
-                                <span className="text-xs text-yellow-600 font-medium">
-                                  {activeChallan.days_on_rent} days
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-3 gap-1">
-                                {activeChallan.items.filter(item => item.outstanding > 0).map((item) => (
-                                  <div key={item.id} className="text-xs text-center bg-white rounded p-1">
-                                    <div className="text-gray-600">{item.plate_size}</div>
-                                    <div className="font-medium text-yellow-700">{item.outstanding}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Recent History (Limited) */}
-                    <div className="bg-white rounded-lg p-3">
-                      <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        Recent Returns:
-                      </h4>
-                      {ledger.completed_challans.length === 0 ? (
-                        <p className="text-sm text-gray-500">No completed rentals</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {ledger.completed_challans.slice(0, 2).map((rental) => (
-                            <div key={rental.challan.id} className="bg-green-50 border border-green-200 rounded p-2">
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-sm">#{rental.challan.challan_number}</span>
-                                <span className="text-xs text-green-600">
-                                  {new Date(rental.challan.challan_date).toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                          {ledger.completed_challans.length > 2 && (
-                            <div className="text-center text-xs text-gray-500 py-1">
-                              +{ledger.completed_challans.length - 2} more completed
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </>
+                  <ClientActivityTable ledger={ledger} />
                 )}
               </div>
             )}
@@ -406,6 +320,180 @@ export function MobileLedgerPage() {
             </p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// New component for the comprehensive activity table
+interface ClientActivityTableProps {
+  ledger: ClientLedger;
+}
+
+function ClientActivityTable({ ledger }: ClientActivityTableProps) {
+  // Get all unique plate sizes from the client's activity
+  const allPlateSizes = Array.from(new Set([
+    ...ledger.plate_balances.map(b => b.plate_size),
+    ...ledger.active_challans.flatMap(c => c.items.map(i => i.plate_size)),
+    ...ledger.completed_challans.flatMap(c => c.items.map(i => i.plate_size))
+  ])).sort();
+
+  // Combine and sort all challans by date (latest first)
+  const allChallans = [
+    ...ledger.active_challans.map(ac => ({
+      type: 'udhar' as const,
+      id: ac.challan.id,
+      number: ac.challan.challan_number,
+      date: ac.challan.challan_date,
+      items: ac.items.map(item => ({
+        plate_size: item.plate_size,
+        quantity: item.borrowed_quantity
+      }))
+    })),
+    ...ledger.completed_challans.map(cc => ({
+      type: 'udhar' as const,
+      id: cc.challan.id,
+      number: cc.challan.challan_number,
+      date: cc.challan.challan_date,
+      items: cc.items.map(item => ({
+        plate_size: item.plate_size,
+        quantity: item.borrowed_quantity
+      }))
+    }))
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Get current balance for each plate size
+  const getCurrentBalance = (plateSize: string) => {
+    const balance = ledger.plate_balances.find(b => b.plate_size === plateSize);
+    return balance?.outstanding || 0;
+  };
+
+  // Get quantity for a specific challan and plate size
+  const getChallanQuantity = (challan: typeof allChallans[0], plateSize: string) => {
+    const item = challan.items.find(i => i.plate_size === plateSize);
+    return item?.quantity || 0;
+  };
+
+  return (
+    <div className="bg-white rounded-lg overflow-hidden">
+      <div className="p-3 border-b border-gray-200">
+        <h4 className="font-medium text-gray-900 flex items-center gap-2">
+          <Package className="w-4 h-4 text-blue-600" />
+          પ્લેટ પ્રવૃત્તિ (Plate Activity)
+        </h4>
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="sticky left-0 bg-gray-50 px-3 py-3 text-left font-medium text-gray-700 border-r border-gray-200 min-w-[80px]">
+                પ્લેટ સાઇઝ
+                <br />
+                <span className="text-xs font-normal">Plate Size</span>
+              </th>
+              {allPlateSizes.map(size => (
+                <th key={size} className="px-2 py-3 text-center font-medium text-gray-700 border-r border-gray-200 min-w-[60px]">
+                  {size}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {/* Current Balance Row */}
+            <tr className="bg-blue-50 border-b-2 border-blue-200">
+              <td className="sticky left-0 bg-blue-50 px-3 py-3 font-medium text-blue-900 border-r border-blue-200">
+                વર્તમાન બેલેન્સ
+                <br />
+                <span className="text-xs font-normal">Current Balance</span>
+              </td>
+              {allPlateSizes.map(size => {
+                const balance = getCurrentBalance(size);
+                return (
+                  <td key={size} className="px-2 py-3 text-center border-r border-blue-200">
+                    <span className={`font-bold text-lg ${
+                      balance > 0 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {balance}
+                    </span>
+                  </td>
+                );
+              })}
+            </tr>
+
+            {/* Challan Rows */}
+            {allChallans.length === 0 ? (
+              <tr>
+                <td colSpan={allPlateSizes.length + 1} className="px-3 py-6 text-center text-gray-500">
+                  કોઈ ચલણ પ્રવૃત્તિ નથી
+                  <br />
+                  <span className="text-xs">No challan activity</span>
+                </td>
+              </tr>
+            ) : (
+              allChallans.map((challan, index) => (
+                <tr 
+                  key={`${challan.type}-${challan.id}`}
+                  className={`border-b border-gray-100 hover:bg-gray-50 ${
+                    challan.type === 'udhar' ? 'bg-yellow-50' : 'bg-green-50'
+                  }`}
+                >
+                  <td className={`sticky left-0 px-3 py-3 border-r border-gray-200 ${
+                    challan.type === 'udhar' ? 'bg-yellow-50' : 'bg-green-50'
+                  }`}>
+                    <div className="space-y-1">
+                      <div className="font-medium text-gray-900">
+                        #{challan.number}
+                      </div>
+                      <div className={`text-xs px-2 py-1 rounded-full font-medium inline-block ${
+                        challan.type === 'udhar' 
+                          ? 'bg-yellow-200 text-yellow-800' 
+                          : 'bg-green-200 text-green-800'
+                      }`}>
+                        {challan.type === 'udhar' ? 'ઉધાર' : 'જમા'}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {new Date(challan.date).toLocaleDateString('en-GB')}
+                      </div>
+                    </div>
+                  </td>
+                  {allPlateSizes.map(size => {
+                    const quantity = getChallanQuantity(challan, size);
+                    return (
+                      <td key={size} className="px-2 py-3 text-center border-r border-gray-200">
+                        {quantity > 0 && (
+                          <span className={`font-medium ${
+                            challan.type === 'udhar' ? 'text-yellow-700' : 'text-green-700'
+                          }`}>
+                            {challan.type === 'udhar' ? '+' : '-'}{quantity}
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Legend */}
+      <div className="p-3 bg-gray-50 border-t border-gray-200">
+        <div className="flex flex-wrap gap-4 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-yellow-200 rounded"></div>
+            <span>ઉધાર (Issue)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-green-200 rounded"></div>
+            <span>જમા (Return)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-blue-200 rounded"></div>
+            <span>વર્તમાન બેલેન્સ (Current Balance)</span>
+          </div>
+        </div>
       </div>
     </div>
   );
