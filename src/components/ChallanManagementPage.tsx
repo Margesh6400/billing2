@@ -5,7 +5,7 @@ import { Download, Eye, Search, ChevronDown, ChevronUp, Calendar, User, Hash, Fi
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { T, useTranslation } from '../contexts/LanguageContext';
-import { generateAndDownloadPDF } from '../utils/pdfGenerator';
+import { generateJPGChallan, downloadJPGChallan } from '../utils/jpgChallanGenerator';
 import { PrintableChallan } from './challans/PrintableChallan';
 import { ChallanData } from './challans/types';
 
@@ -384,14 +384,8 @@ export function ChallanManagementPage() {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Generate and download the PDF
-      const success = await generateAndDownloadPDF(
-        `challan-${challanDataForPDF.challan_number}`,
-        `${type}-challan-${challanDataForPDF.challan_number}`
-      );
-
-      if (!success) {
-        throw new Error('Failed to generate PDF');
-      }
+      const jpgDataUrl = await generateJPGChallan(challanDataForPDF);
+      downloadJPGChallan(jpgDataUrl, `${type}-challan-${challanDataForPDF.challan_number}`);
 
       setChallanData(null);
     } catch (error) {

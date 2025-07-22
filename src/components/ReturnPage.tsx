@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { Database } from '../lib/supabase'
 import { RotateCcw, Package, Save, Loader2, Calendar, User, Search, Hash, MapPin, Phone } from 'lucide-react'
 import { PrintableChallan } from './challans/PrintableChallan'
-import { generateAndDownloadPDF } from '../utils/pdfGenerator'
+import { generateJPGChallan, downloadJPGChallan } from '../utils/jpgChallanGenerator'
 import { ChallanData } from './challans/types'
 
 type Client = Database['public']['Tables']['clients']['Row']
@@ -191,17 +191,12 @@ export function ReturnPage() {
 
       // Generate and download the PDF
       try {
-        const success = await generateAndDownloadPDF(
-          `challan-${returnRecord.return_challan_number}`,
-          `return-challan-${returnRecord.return_challan_number}`
-        );
+        const jpgDataUrl = await generateJPGChallan(newChallanData);
+        downloadJPGChallan(jpgDataUrl, `return-challan-${returnRecord.return_challan_number}`);
 
-        if (!success) {
-          throw new Error('Failed to generate PDF');
-        }
       } catch (error) {
-        console.error('PDF generation failed:', error);
-        alert('Error generating PDF. Please try again.');
+        console.error('JPG generation failed:', error);
+        alert('Error generating challan image. Please try again.');
         return;
       }
 

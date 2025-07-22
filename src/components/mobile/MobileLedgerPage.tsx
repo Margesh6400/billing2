@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { T } from '../../contexts/LanguageContext';
 import { PrintableChallan } from '../challans/PrintableChallan';
-import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { generateJPGChallan, downloadJPGChallan } from '../../utils/jpgChallanGenerator';
 import { ChallanData } from '../challans/types';
 
 type Client = Database['public']['Tables']['clients']['Row'];
@@ -305,14 +305,8 @@ export function MobileLedgerPage() {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Generate and download the PDF
-      const success = await generateAndDownloadPDF(
-        `challan-${challanDataForPDF.challan_number}`,
-        `${type}-challan-${challanDataForPDF.challan_number}`
-      );
-
-      if (!success) {
-        throw new Error('Failed to generate PDF');
-      }
+      const jpgDataUrl = await generateJPGChallan(challanDataForPDF);
+      downloadJPGChallan(jpgDataUrl, `${type}-challan-${challanDataForPDF.challan_number}`);
 
       setChallanData(null);
     } catch (error) {

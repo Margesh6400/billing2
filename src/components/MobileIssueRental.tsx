@@ -4,7 +4,7 @@ import { Database } from '../lib/supabase';
 import { ClientSelector } from './ClientSelector';
 import { FileText, Package, Save, Loader2, Calendar, Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react';
 import { PrintableChallan } from './challans/PrintableChallan';
-import { generateAndDownloadPDF } from '../utils/pdfGenerator';
+import { generateJPGChallan, downloadJPGChallan } from '../utils/jpgChallanGenerator';
 import { ChallanData } from './challans/types';
 import { T } from '../contexts/LanguageContext';
 
@@ -230,14 +230,8 @@ export function MobileIssueRental() {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       try {
-        const success = await generateAndDownloadPDF(
-          `challan-${challan.challan_number}`,
-          `issue-challan-${challan.challan_number}`
-        );
-
-        if (!success) {
-          throw new Error('Failed to generate PDF');
-        }
+        const jpgDataUrl = await generateJPGChallan(newChallanData);
+        downloadJPGChallan(jpgDataUrl, `issue-challan-${challan.challan_number}`);
 
         setQuantities({});
         setPlateNotes({});
@@ -249,8 +243,8 @@ export function MobileIssueRental() {
         alert(`Challan ${challan.challan_number} created and downloaded successfully!`);
         await fetchStockData();
       } catch (error) {
-        console.error('PDF generation failed:', error);
-        alert('Error generating PDF. The challan was created but could not be downloaded.');
+        console.error('JPG generation failed:', error);
+        alert('Error generating challan image. The challan was created but could not be downloaded.');
       }
     } catch (error) {
       console.error('Error creating challan:', error);

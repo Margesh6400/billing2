@@ -4,7 +4,7 @@ import { Database } from '../lib/supabase'
 import { ClientSelector } from './ClientSelector'
 import { FileText, Package, Save, Loader2, Calendar, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 import { PrintableChallan } from './challans/PrintableChallan'
-import { generateAndDownloadPDF } from '../utils/pdfGenerator'
+import { generateJPGChallan, downloadJPGChallan } from '../utils/jpgChallanGenerator'
 import { ChallanData } from './challans/types'
 
 type Client = Database['public']['Tables']['clients']['Row']
@@ -242,14 +242,8 @@ export function IssueRental() {
 
       // Generate and download the PDF
       try {
-        const success = await generateAndDownloadPDF(
-          `challan-${challan.challan_number}`,
-          `issue-challan-${challan.challan_number}`
-        );
-
-        if (!success) {
-          throw new Error('Failed to generate PDF');
-        }
+        const jpgDataUrl = await generateJPGChallan(newChallanData);
+        downloadJPGChallan(jpgDataUrl, `issue-challan-${challan.challan_number}`);
 
         // Reset form after successful PDF generation
         setQuantities({})
@@ -262,8 +256,8 @@ export function IssueRental() {
         alert(`Challan ${challan.challan_number} created and downloaded successfully!`)
         await fetchStockData() // Refresh stock data
       } catch (error) {
-        console.error('PDF generation failed:', error);
-        alert('Error generating PDF. The challan was created but could not be downloaded.');
+        console.error('JPG generation failed:', error);
+        alert('Error generating challan image. The challan was created but could not be downloaded.');
       }
     } catch (error) {
       console.error('Error creating challan:', error)
