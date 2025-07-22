@@ -14,7 +14,7 @@ import {
   MapPin,
   Hash,
   AlertTriangle,
-  TrendingUp
+  TrendingUp,
   Download,
   FileDown
 } from 'lucide-react';
