@@ -6,10 +6,12 @@ interface RentalItem {
   id: string;
   item_name: string;
   quantity: number;
+  returned_quantity: number;
+  outstanding_quantity: number;
   issue_date: string;
   client_name: string;
   client_id: string;
-  rate: number;
+  challan_number: string;
 }
 
 interface MobileReturnPageProps {
@@ -28,32 +30,44 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
   const fetchActiveRentals = async () => {
     try {
       const { data, error } = await supabase
-        .from('rentals')
+        .from('challan_items')
         .select(`
           id,
           item_name,
           quantity,
-          issue_date,
-          rate,
-          clients (
+          returned_quantity,
+          challans (
             id,
-            name
+            challan_number,
+            issue_date,
+            clients (
+              id,
+              name
+            )
           )
         `)
-        .eq('status', 'active')
-        .order('issue_date', { ascending: false });
+        .gt('quantity', 0)
+        .order('id', { ascending: false });
 
       if (error) throw error;
 
-      const formattedRentals = data?.map(rental => ({
-        id: rental.id,
-        item_name: rental.item_name,
-        quantity: rental.quantity,
-        issue_date: rental.issue_date,
-        rate: rental.rate,
-        client_name: rental.clients?.name || 'Unknown Client',
-        client_id: rental.clients?.id || ''
-      })) || [];
+      const formattedRentals = data?.filter(item => {
+        const outstandingQty = (item.quantity || 0) - (item.returned_quantity || 0);
+        return outstandingQty > 0;
+      }).map(item => {
+        const outstandingQty = (item.quantity || 0) - (item.returned_quantity || 0);
+        return {
+          id: item.id,
+          item_name: item.item_name,
+          quantity: item.quantity || 0,
+          returned_quantity: item.returned_quantity || 0,
+          outstanding_quantity: outstandingQty,
+          issue_date: item.challans?.issue_date || '',
+          client_name: item.challans?.clients?.name || 'Unknown Client',
+          client_id: item.challans?.clients?.id || '',
+          challan_number: item.challans?.challan_number || ''
+        };
+      }) || [];
 
       setRentals(formattedRentals);
     } catch (error) {
@@ -63,21 +77,55 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
     }
   };
 
-  const handleReturn = async (rentalId: string) => {
-    setReturning(rentalId);
+  const generateReturnChallanNumber = () => {
+    const now = new Date();
+    const timestamp = now.getTime().toString().slice(-6);
+    return `RET-${timestamp}`;
+  };
+
+  const handleReturn = async (challanItemId: string) => {
+    setReturning(challanItemId);
     try {
-      const { error } = await supabase
-        .from('rentals')
-        .update({ 
-          status: 'returned',
+      const rental = rentals.find(r => r.id === challanItemId);
+      if (!rental) throw new Error('Rental item not found');
+
+      // Create return record
+      const returnChallanNumber = generateReturnChallanNumber();
+      const { data: returnData, error: returnError } = await supabase
+        .from('returns')
+        .insert({
+          return_challan_number: returnChallanNumber,
+          client_id: rental.client_id,
           return_date: new Date().toISOString()
         })
-        .eq('id', rentalId);
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (returnError) throw returnError;
+
+      // Create return line item
+      const { error: lineItemError } = await supabase
+        .from('return_line_items')
+        .insert({
+          return_id: returnData.id,
+          item_name: rental.item_name,
+          quantity: rental.outstanding_quantity
+        });
+
+      if (lineItemError) throw lineItemError;
+
+      // Update challan item returned quantity
+      const { error: updateError } = await supabase
+        .from('challan_items')
+        .update({ 
+          returned_quantity: rental.quantity
+        })
+        .eq('id', challanItemId);
+
+      if (updateError) throw updateError;
 
       // Remove from local state
-      setRentals(prev => prev.filter(rental => rental.id !== rentalId));
+      setRentals(prev => prev.filter(rental => rental.id !== challanItemId));
     } catch (error) {
       console.error('Error returning item:', error);
     } finally {
@@ -147,14 +195,17 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
                       <User className="w-4 h-4 mr-1" />
                       {rental.client_name}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-gray-600 mb-1">
                       <Calendar className="w-4 h-4 mr-1" />
                       {formatDate(rental.issue_date)} • {calculateDays(rental.issue_date)} days
                     </div>
+                    <div className="text-xs text-gray-500">
+                      Challan: {rental.challan_number}
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-gray-600">Qty: {rental.quantity}</div>
-                    <div className="text-sm font-medium text-gray-800">₹{rental.rate}/day</div>
+                    <div className="text-sm text-gray-600">Outstanding: {rental.outstanding_quantity}</div>
+                    <div className="text-xs text-gray-500">Total: {rental.quantity}</div>
                   </div>
                 </div>
                 
