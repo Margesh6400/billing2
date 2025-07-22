@@ -31,6 +31,7 @@ interface StockValidation {
 export function IssueRental() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [challanNumber, setChallanNumber] = useState('')
+  const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('')
   const [challanDate, setChallanDate] = useState(new Date().toISOString().split('T')[0])
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [partnerNotes, setPartnerNotes] = useState<Record<string, string>>({})
@@ -42,6 +43,7 @@ export function IssueRental() {
 
   useEffect(() => {
     fetchStockData()
+    generateNextChallanNumber()
   }, [])
 
   useEffect(() => {
@@ -61,6 +63,57 @@ export function IssueRental() {
       setStockData(data || [])
     } catch (error) {
       console.error('Error fetching stock data:', error)
+    }
+  }
+
+  const generateNextChallanNumber = async () => {
+    try {
+      // Fetch all existing issue challans to find the highest number
+      const { data, error } = await supabase
+        .from('challans')
+        .select('challan_number')
+        .order('id', { ascending: false })
+
+      if (error) throw error
+
+      let maxNumber = 0
+      if (data && data.length > 0) {
+        // Extract numeric values from challan numbers and find the maximum
+        data.forEach(challan => {
+          const match = challan.challan_number.match(/\d+/)
+          if (match) {
+            const num = parseInt(match[0])
+            if (num > maxNumber) {
+              maxNumber = num
+            }
+          }
+        })
+      }
+
+      const nextNumber = (maxNumber + 1).toString()
+      setSuggestedChallanNumber(nextNumber)
+      
+      // Set as default only if current challan number is empty
+      if (!challanNumber) {
+        setChallanNumber(nextNumber)
+      }
+    } catch (error) {
+      console.error('Error generating challan number:', error)
+      // Fallback to timestamp-based number
+      const fallback = Date.now().toString().slice(-6)
+      setSuggestedChallanNumber(fallback)
+      if (!challanNumber) {
+        setChallanNumber(fallback)
+      }
+    }
+  }
+
+  const handleChallanNumberChange = (value: string) => {
+    setChallanNumber(value)
+    
+    // If user clears the input, suggest the next available number
+    if (!value.trim()) {
+      setChallanNumber(suggestedChallanNumber)
     }
   }
 
@@ -284,9 +337,10 @@ export function IssueRental() {
                 <input
                   type="text"
                   value={challanNumber}
-                  onChange={(e) => setChallanNumber(e.target.value)}
+                  onChange={(e) => handleChallanNumberChange(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
-                  placeholder="Enter challan number"
+                  placeholder={`Suggested: ${suggestedChallanNumber}`}
                   required
                 />
               </div>
