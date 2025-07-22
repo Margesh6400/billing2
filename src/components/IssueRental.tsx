@@ -34,8 +34,7 @@ export function IssueRental() {
   const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('')
   const [challanDate, setChallanDate] = useState(new Date().toISOString().split('T')[0])
   const [quantities, setQuantities] = useState<Record<string, number>>({})
-  const [partnerNotes, setPartnerNotes] = useState<Record<string, string>>({})
-  const [showPartnerColumn, setShowPartnerColumn] = useState(false)
+  const [overallNote, setOverallNote] = useState('')
   const [stockData, setStockData] = useState<Stock[]>([])
   const [loading, setLoading] = useState(false)
   const [stockValidation, setStockValidation] = useState<StockValidation[]>([])
@@ -145,13 +144,6 @@ export function IssueRental() {
     }))
   }
 
-  const handlePartnerNotesChange = (size: string, value: string) => {
-    setPartnerNotes(prev => ({
-      ...prev,
-      [size]: value
-    }))
-  }
-
   const checkChallanNumberExists = async (challanNumber: string) => {
     const { data, error } = await supabase
       .from('challans')
@@ -190,12 +182,8 @@ export function IssueRental() {
 
       // Check for stock validation errors
       if (stockValidation.length > 0) {
-        const hasNotesForInsufficient = stockValidation.every(item => 
-          partnerNotes[item.size]?.trim()
-        )
-        
-        if (!hasNotesForInsufficient) {
-          alert('Please add partner stock notes for items with insufficient stock.')
+        if (!overallNote.trim()) {
+          alert('Please add a note for items with insufficient stock.')
           return
         }
       }
@@ -218,7 +206,7 @@ export function IssueRental() {
         challan_id: challan.id,
         plate_size: size,
         borrowed_quantity: quantities[size],
-        partner_stock_notes: partnerNotes[size] || null
+        partner_stock_notes: overallNote.trim() || null
       }))
 
       const { error: lineItemsError } = await supabase
@@ -241,7 +229,7 @@ export function IssueRental() {
         plates: validItems.map(size => ({
           size,
           quantity: quantities[size],
-          notes: partnerNotes[size] || '',
+          notes: overallNote || '',
         })),
         total_quantity: validItems.reduce((sum, size) => sum + quantities[size], 0)
       };
@@ -265,10 +253,9 @@ export function IssueRental() {
 
         // Reset form after successful PDF generation
         setQuantities({})
-        setPartnerNotes({})
+        setOverallNote('')
         setChallanNumber('')
         setSelectedClient(null)
-        setShowPartnerColumn(false)
         setStockValidation([])
         setChallanData(null)
         
@@ -360,38 +347,27 @@ export function IssueRental() {
               </div>
             </div>
 
-            {/* Partner Column Toggle */}
-            <div className="flex justify-between items-center">
-              <button
-                type="button"
-                onClick={() => setShowPartnerColumn(!showPartnerColumn)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                {showPartnerColumn ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showPartnerColumn ? 'Hide' : 'Show'} Partner Stock Column
-              </button>
-              
-              {stockValidation.length > 0 && (
-                <div className="flex items-center gap-2 text-amber-600">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span className="text-sm font-medium">Stock validation required</span>
-                </div>
-              )}
-            </div>
+            {/* Stock Validation Warning */}
+            {stockValidation.length > 0 && (
+              <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">Some items have insufficient stock. Please add a note below.</span>
+              </div>
+            )}
 
-            {/* Three-Column Responsive Table */}
+            {/* Plates Table */}
             <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
-              <table className="w-full min-w-[600px] md:min-w-full table-auto border border-gray-200 rounded-lg">
+              <table className="w-full min-w-[400px] md:min-w-full table-auto border border-gray-200 rounded-lg">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
                       Plate Size
                     </th>
                     <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
-                      Quantity to Borrow
+                      Available Stock
                     </th>
-                    <th className={`px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b ${showPartnerColumn ? 'table-cell' : 'hidden'}`}>
-                      Partner Stock Notes
+                    <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
+                      Quantity to Borrow
                     </th>
                   </tr>
                 </thead>
@@ -403,14 +379,15 @@ export function IssueRental() {
                     return (
                       <tr key={size} className={`border-b hover:bg-gray-50 ${isInsufficient ? 'bg-red-50' : ''}`}>
                         <td className="px-2 py-2 md:px-4 md:py-3">
-                          <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <Package className="w-4 h-4 text-gray-500" />
                             <span className="font-medium text-gray-900">{size}</span>
-                            {stockInfo && (
-                              <span className="text-xs text-gray-500">
-                                Available: {stockInfo.available_quantity}
-                              </span>
-                            )}
                           </div>
+                        </td>
+                        <td className="px-2 py-2 md:px-4 md:py-3">
+                          <span className={`text-sm ${stockInfo ? 'text-gray-600' : 'text-red-500'}`}>
+                            {stockInfo ? stockInfo.available_quantity : 'N/A'}
+                          </span>
                         </td>
                         <td className="px-2 py-2 md:px-4 md:py-3">
                           <input
@@ -431,29 +408,34 @@ export function IssueRental() {
                             </p>
                           )}
                         </td>
-                        <td className={`px-2 py-2 md:px-4 md:py-3 ${showPartnerColumn ? 'table-cell' : 'hidden'}`}>
-                          <input
-                            type="text"
-                            placeholder="Partner stock notes..."
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base ${
-                              isInsufficient && !partnerNotes[size]?.trim() 
-                                ? 'border-red-300' 
-                                : 'border-gray-300'
-                            }`}
-                            value={partnerNotes[size] || ''}
-                            onChange={(e) => handlePartnerNotesChange(size, e.target.value)}
-                          />
-                          {isInsufficient && !partnerNotes[size]?.trim() && (
-                            <p className="text-xs text-red-600 mt-1">
-                              Notes required for insufficient stock
-                            </p>
-                          )}
-                        </td>
                       </tr>
                     )
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Overall Note Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                નોંધ (Note)
+              </label>
+              <textarea
+                value={overallNote}
+                onChange={(e) => setOverallNote(e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base resize-none ${
+                  stockValidation.length > 0 && !overallNote.trim() 
+                    ? 'border-red-300' 
+                    : 'border-gray-300'
+                }`}
+                rows={3}
+                placeholder="Enter any notes for this challan (required if stock is insufficient)..."
+              />
+              {stockValidation.length > 0 && !overallNote.trim() && (
+                <p className="text-xs text-red-600 mt-1">
+                  Note is required when issuing items with insufficient stock
+                </p>
+              )}
             </div>
 
             {/* Submit Button */}

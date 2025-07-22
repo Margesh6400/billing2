@@ -28,8 +28,7 @@ export function MobileReturnPage() {
   const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('');
   const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [showNotesColumn, setShowNotesColumn] = useState(false);
+  const [overallNote, setOverallNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [challanData, setChallanData] = useState<ChallanData | null>(null);
 
@@ -97,13 +96,6 @@ export function MobileReturnPage() {
     }));
   };
 
-  const handleNotesChange = (size: string, value: string) => {
-    setNotes(prev => ({
-      ...prev,
-      [size]: value
-    }));
-  };
-
   const checkReturnChallanNumberExists = async (challanNumber: string) => {
     const { data, error } = await supabase
       .from('returns')
@@ -140,8 +132,8 @@ export function MobileReturnPage() {
         .map(size => ({
           plate_size: size,
           returned_quantity: quantities[size],
-          damage_notes: notes[size] || null,
-          partner_stock_notes: notes[size] || null
+          damage_notes: overallNote.trim() || null,
+          partner_stock_notes: overallNote.trim() || null
         }));
 
       const { data: returnRecord, error: returnError } = await supabase
@@ -182,7 +174,7 @@ export function MobileReturnPage() {
         plates: returnEntries.map(entry => ({
           size: entry.plate_size,
           quantity: entry.returned_quantity,
-          notes: entry.damage_notes || '',
+          notes: overallNote || '',
         })),
         total_quantity: returnEntries.reduce((sum, entry) => sum + entry.returned_quantity, 0)
       };
@@ -207,10 +199,9 @@ export function MobileReturnPage() {
       }
 
       setQuantities({});
-      setNotes({});
+      setOverallNote('');
       setReturnChallanNumber('');
       setSelectedClient(null);
-      setShowNotesColumn(false);
       setChallanData(null);
       
       const message = returnEntries.length > 0 
@@ -293,18 +284,6 @@ export function MobileReturnPage() {
               </div>
             </div>
 
-            {/* Notes Column Toggle */}
-            <div className="flex justify-start">
-              <button
-                type="button"
-                onClick={() => setShowNotesColumn(!showNotesColumn)}
-                className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
-              >
-                {showNotesColumn ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showNotesColumn ? 'Hide' : 'Show'} Notes
-              </button>
-            </div>
-
             {/* Plates List */}
             <div className="space-y-3">
               {PLATE_SIZES.map(size => (
@@ -328,24 +307,23 @@ export function MobileReturnPage() {
                         placeholder="0"
                       />
                     </div>
-                    
-                    {showNotesColumn && (
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
-                          <T>Notes</T>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Damage/loss notes..."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                          value={notes[size] || ''}
-                          onChange={(e) => handleNotesChange(size, e.target.value)}
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Overall Note Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                નોંધ (Note)
+              </label>
+              <textarea
+                value={overallNote}
+                onChange={(e) => setOverallNote(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base resize-none"
+                rows={3}
+                placeholder="Enter any notes for this return (damage, loss, etc.)..."
+              />
             </div>
 
             {/* Submit Button */}

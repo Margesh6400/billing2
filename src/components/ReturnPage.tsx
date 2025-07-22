@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Database } from '../lib/supabase'
 import { ClientSelector } from './ClientSelector'
@@ -27,8 +27,7 @@ export function ReturnPage() {
   const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('')
   const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0])
   const [quantities, setQuantities] = useState<Record<string, number>>({})
-  const [notes, setNotes] = useState<Record<string, string>>({})
-  const [showNotesColumn, setShowNotesColumn] = useState(false)
+  const [overallNote, setOverallNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [challanData, setChallanData] = useState<ChallanData | null>(null)
 
@@ -96,13 +95,6 @@ export function ReturnPage() {
     }))
   }
 
-  const handleNotesChange = (size: string, value: string) => {
-    setNotes(prev => ({
-      ...prev,
-      [size]: value
-    }))
-  }
-
   const checkReturnChallanNumberExists = async (challanNumber: string) => {
     const { data, error } = await supabase
       .from('returns')
@@ -142,8 +134,8 @@ export function ReturnPage() {
         .map(size => ({
           plate_size: size,
           returned_quantity: quantities[size],
-          damage_notes: notes[size] || null,
-          partner_stock_notes: notes[size] || null
+          damage_notes: overallNote.trim() || null,
+          partner_stock_notes: overallNote.trim() || null
         }))
 
       // Create the return record (even if no line items)
@@ -187,7 +179,7 @@ export function ReturnPage() {
         plates: returnEntries.map(entry => ({
           size: entry.plate_size,
           quantity: entry.returned_quantity,
-          notes: entry.damage_notes || '',
+          notes: overallNote || '',
         })),
         total_quantity: returnEntries.reduce((sum, entry) => sum + entry.returned_quantity, 0)
       };
@@ -216,10 +208,9 @@ export function ReturnPage() {
 
       // Reset form
       setQuantities({})
-      setNotes({})
+      setOverallNote('')
       setReturnChallanNumber('')
       setSelectedClient(null)
-      setShowNotesColumn(false)
       setChallanData(null)
       
       const message = returnEntries.length > 0 
@@ -301,21 +292,9 @@ export function ReturnPage() {
               </div>
             </div>
 
-            {/* Notes Column Toggle */}
-            <div className="flex justify-start">
-              <button
-                type="button"
-                onClick={() => setShowNotesColumn(!showNotesColumn)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                {showNotesColumn ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showNotesColumn ? 'Hide' : 'Show'} Notes Column
-              </button>
-            </div>
-
-            {/* Three-Column Responsive Table */}
+            {/* Two-Column Responsive Table */}
             <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
-              <table className="w-full min-w-[600px] md:min-w-full table-auto border border-gray-200 rounded-lg">
+              <table className="w-full min-w-[400px] md:min-w-full table-auto border border-gray-200 rounded-lg">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
@@ -323,9 +302,6 @@ export function ReturnPage() {
                     </th>
                     <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
                       Quantity Returned
-                    </th>
-                    <th className={`px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b ${showNotesColumn ? 'table-cell' : 'hidden'}`}>
-                      Notes
                     </th>
                   </tr>
                 </thead>
@@ -348,19 +324,24 @@ export function ReturnPage() {
                           placeholder="0"
                         />
                       </td>
-                      <td className={`px-2 py-2 md:px-4 md:py-3 ${showNotesColumn ? 'table-cell' : 'hidden'}`}>
-                        <input
-                          type="text"
-                          placeholder="Damage/loss notes..."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                          value={notes[size] || ''}
-                          onChange={(e) => handleNotesChange(size, e.target.value)}
-                        />
-                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Overall Note Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                નોંધ (Note)
+              </label>
+              <textarea
+                value={overallNote}
+                onChange={(e) => setOverallNote(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base resize-none"
+                rows={3}
+                placeholder="Enter any notes for this return (damage, loss, etc.)..."
+              />
             </div>
 
             {/* Submit Button */}
