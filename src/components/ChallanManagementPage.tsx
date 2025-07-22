@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
-import { Download, Eye, Search, ChevronDown, ChevronUp, Calendar, User, Hash, FileText, RotateCcw } from 'lucide-react';
+import { Download, Eye, Search, ChevronDown, ChevronUp, Calendar, User, Hash, FileText, RotateCcw, Edit, Save, X, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { T, useTranslation } from '../contexts/LanguageContext';
 import { generateAndDownloadPDF } from '../utils/pdfGenerator';
 import { PrintableChallan } from './challans/PrintableChallan';
 import { ChallanData } from './challans/types';
+
+const PLATE_SIZES = [
+  '2 X 3',
+  '21 X 3',
+  '18 X 3',
+  '15 X 3',
+  '12 X 3',
+  '9 X 3',
+  'પતરા',
+  '2 X 2',
+  '2 ફુટ'
+];
 
 interface Client {
   id: string;
@@ -43,6 +55,16 @@ interface JamaChallan {
   total_plates: number;
 }
 
+interface EditingChallan {
+  id: number;
+  type: 'udhar' | 'jama';
+  challan_number: string;
+  date: string;
+  client_id: string;
+  plates: Record<string, number>;
+  note: string;
+}
+
 type TabType = 'udhar' | 'jama';
 
 export function ChallanManagementPage() {
@@ -55,10 +77,28 @@ export function ChallanManagementPage() {
   const [downloading, setDownloading] = useState<number | null>(null);
   const [challanData, setChallanData] = useState<ChallanData | null>(null);
   const { language } = useTranslation();
+  const [editingChallan, setEditingChallan] = useState<EditingChallan | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(() => {
     fetchChallans();
+    fetchClients();
   }, []);
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
 
   const fetchChallans = async () => {
     try {
@@ -111,6 +151,197 @@ export function ChallanManagementPage() {
       console.error('Error fetching challans:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditChallan = async (challan: UdharChallan | JamaChallan, type: 'udhar' | 'jama') => {
+    try {
+      // Fetch detailed challan data
+      if (type === 'udhar') {
+        const { data, error } = await supabase
+          .from('challans')
+          .select(`
+            *,
+            challan_items(*)
+          `)
+          .eq('id', challan.id)
+          .single();
+
+        if (error) throw error;
+
+        const plates: Record<string, number> = {};
+        data.challan_items.forEach(item => {
+          plates[item.plate_size] = item.borrowed_quantity;
+        });
+
+        setEditingChallan({
+          id: challan.id,
+          type: 'udhar',
+          challan_number: data.challan_number,
+          date: data.challan_date,
+          client_id: data.client_id,
+          plates,
+          note: data.challan_items[0]?.partner_stock_notes || ''
+        });
+      } else {
+        const { data, error } = await supabase
+          .from('returns')
+          .select(`
+            *,
+            return_line_items(*)
+          `)
+          .eq('id', challan.id)
+          .single();
+
+        if (error) throw error;
+
+        const plates: Record<string, number> = {};
+        data.return_line_items.forEach(item => {
+          plates[item.plate_size] = item.returned_quantity;
+        });
+
+        setEditingChallan({
+          id: challan.id,
+          type: 'jama',
+          challan_number: data.return_challan_number,
+          date: data.return_date,
+          client_id: data.client_id,
+          plates,
+          note: data.return_line_items[0]?.damage_notes || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching challan details:', error);
+      alert('Error loading challan details.');
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingChallan) return;
+
+    setEditLoading(true);
+    try {
+      if (editingChallan.type === 'udhar') {
+        // Update challan
+        const { error: challanError } = await supabase
+          .from('challans')
+          .update({
+            challan_number: editingChallan.challan_number,
+            challan_date: editingChallan.date,
+            client_id: editingChallan.client_id
+          })
+          .eq('id', editingChallan.id);
+
+        if (challanError) throw challanError;
+
+        // Delete existing items
+        const { error: deleteError } = await supabase
+          .from('challan_items')
+          .delete()
+          .eq('challan_id', editingChallan.id);
+
+        if (deleteError) throw deleteError;
+
+        // Insert new items
+        const newItems = Object.entries(editingChallan.plates)
+          .filter(([_, quantity]) => quantity > 0)
+          .map(([plate_size, quantity]) => ({
+            challan_id: editingChallan.id,
+            plate_size,
+            borrowed_quantity: quantity,
+            partner_stock_notes: editingChallan.note || null
+          }));
+
+        if (newItems.length > 0) {
+          const { error: insertError } = await supabase
+            .from('challan_items')
+            .insert(newItems);
+
+          if (insertError) throw insertError;
+        }
+      } else {
+        // Update return
+        const { error: returnError } = await supabase
+          .from('returns')
+          .update({
+            return_challan_number: editingChallan.challan_number,
+            return_date: editingChallan.date,
+            client_id: editingChallan.client_id
+          })
+          .eq('id', editingChallan.id);
+
+        if (returnError) throw returnError;
+
+        // Delete existing items
+        const { error: deleteError } = await supabase
+          .from('return_line_items')
+          .delete()
+          .eq('return_id', editingChallan.id);
+
+        if (deleteError) throw deleteError;
+
+        // Insert new items
+        const newItems = Object.entries(editingChallan.plates)
+          .filter(([_, quantity]) => quantity > 0)
+          .map(([plate_size, quantity]) => ({
+            return_id: editingChallan.id,
+            plate_size,
+            returned_quantity: quantity,
+            damage_notes: editingChallan.note || null
+          }));
+
+        if (newItems.length > 0) {
+          const { error: insertError } = await supabase
+            .from('return_line_items')
+            .insert(newItems);
+
+          if (insertError) throw insertError;
+        }
+      }
+
+      setEditingChallan(null);
+      await fetchChallans();
+      alert('Challan updated successfully!');
+    } catch (error) {
+      console.error('Error updating challan:', error);
+      alert('Error updating challan. Please try again.');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteChallan = async () => {
+    if (!editingChallan) return;
+
+    const confirmDelete = confirm(`Are you sure you want to delete this ${editingChallan.type} challan? This action cannot be undone.`);
+    if (!confirmDelete) return;
+
+    setEditLoading(true);
+    try {
+      if (editingChallan.type === 'udhar') {
+        const { error } = await supabase
+          .from('challans')
+          .delete()
+          .eq('id', editingChallan.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('returns')
+          .delete()
+          .eq('id', editingChallan.id);
+
+        if (error) throw error;
+      }
+
+      setEditingChallan(null);
+      await fetchChallans();
+      alert('Challan deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting challan:', error);
+      alert('Error deleting challan. Please try again.');
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -376,6 +607,16 @@ export function ChallanManagementPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        handleEditChallan(challan, activeTab);
+                      }}
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setExpandedChallan(expandedChallan === challan.id ? null : challan.id);
                       }}
                       className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
@@ -477,6 +718,160 @@ export function ChallanManagementPage() {
           )}
         </motion.div>
       </AnimatePresence>
+
+      {/* Edit Modal */}
+      {editingChallan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Edit {editingChallan.type === 'udhar' ? 'Udhar' : 'Jama'} Challan
+                </h2>
+                <button
+                  onClick={() => setEditingChallan(null)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Challan Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editingChallan.challan_number}
+                      onChange={(e) => setEditingChallan({
+                        ...editingChallan,
+                        challan_number: e.target.value
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={editingChallan.date}
+                      onChange={(e) => setEditingChallan({
+                        ...editingChallan,
+                        date: e.target.value
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Client Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Client
+                  </label>
+                  <select
+                    value={editingChallan.client_id}
+                    onChange={(e) => setEditingChallan({
+                      ...editingChallan,
+                      client_id: e.target.value
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.name} ({client.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Plate Quantities */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Plate Quantities
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {PLATE_SIZES.map(size => (
+                      <div key={size} className="border border-gray-200 rounded-lg p-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {size}
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={editingChallan.plates[size] || ''}
+                          onChange={(e) => setEditingChallan({
+                            ...editingChallan,
+                            plates: {
+                              ...editingChallan.plates,
+                              [size]: parseInt(e.target.value) || 0
+                            }
+                          })}
+                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                          placeholder="0"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Note */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    નોંધ (Note)
+                  </label>
+                  <textarea
+                    value={editingChallan.note}
+                    onChange={(e) => setEditingChallan({
+                      ...editingChallan,
+                      note: e.target.value
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    rows={3}
+                    placeholder="Enter any notes for this challan..."
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                  <button
+                    onClick={handleSaveEdit}
+                    disabled={editLoading}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {editLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleDeleteChallan}
+                    disabled={editLoading}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Challan
+                  </button>
+                  <button
+                    onClick={() => setEditingChallan(null)}
+                    disabled={editLoading}
+                    className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
