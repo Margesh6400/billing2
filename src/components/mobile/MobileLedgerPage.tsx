@@ -15,8 +15,13 @@ import {
   Hash,
   AlertTriangle,
   TrendingUp
+  Download,
+  FileDown
 } from 'lucide-react';
 import { T } from '../../contexts/LanguageContext';
+import { PrintableChallan } from '../challans/PrintableChallan';
+import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { ChallanData } from '../challans/types';
 
 type Client = Database['public']['Tables']['clients']['Row'];
 type Challan = Database['public']['Tables']['challans']['Row'];
@@ -68,6 +73,8 @@ export function MobileLedgerPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [challanData, setChallanData] = useState<ChallanData | null>(null);
 
   useEffect(() => {
     fetchClientLedgers();
@@ -262,6 +269,143 @@ export function MobileLedgerPage() {
     setExpandedClient(expandedClient === clientId ? null : clientId);
   };
 
+  const handleDownloadChallan = async (transaction: any, type: 'udhar' | 'jama') => {
+    try {
+      const downloadKey = `${type}-${transaction.id}`;
+      setDownloading(downloadKey);
+      
+      // Find the client for this transaction
+      const client = clientLedgers.find(ledger => ledger.client.id === transaction.client_id)?.client;
+      if (!client) {
+        throw new Error('Client not found');
+      }
+
+      // Prepare challan data for PDF
+      const challanDataForPDF: ChallanData = {
+        type: type === 'udhar' ? 'issue' : 'return',
+        challan_number: transaction.number,
+        date: transaction.date,
+        client: {
+          id: client.id,
+          name: client.name,
+          site: client.site || '',
+          mobile: client.mobile_number || ''
+        },
+        plates: transaction.items.map(item => ({
+          size: item.plate_size,
+          quantity: item.quantity,
+          notes: '',
+        })),
+        total_quantity: transaction.items.reduce((sum, item) => sum + item.quantity, 0)
+      };
+
+      setChallanData(challanDataForPDF);
+      
+      // Wait for the component to render
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Generate and download the PDF
+      const success = await generateAndDownloadPDF(
+        `challan-${challanDataForPDF.challan_number}`,
+        `${type}-challan-${challanDataForPDF.challan_number}`
+      );
+
+      if (!success) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      setChallanData(null);
+    } catch (error) {
+      console.error('Error downloading challan:', error);
+      alert('Error downloading challan. Please try again.');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleBackupData = async () => {
+    try {
+      // Prepare CSV data
+      const csvRows = [];
+      
+      // CSV Headers
+      const headers = [
+        'Client ID',
+        'Client Name', 
+        'Site',
+        'Mobile Number',
+        'Total Outstanding Plates',
+        'Plate Size',
+        'Total Issued',
+        'Total Returned',
+        'Current Balance',
+        'Active Challans Count',
+        'Completed Challans Count',
+        'Last Activity Date'
+      ];
+      csvRows.push(headers.join(','));
+
+      // Add data for each client
+      clientLedgers.forEach(ledger => {
+        if (ledger.plate_balances.length === 0) {
+          // Client with no plate activity
+          csvRows.push([
+            `"${ledger.client.id}"`,
+            `"${ledger.client.name}"`,
+            `"${ledger.client.site}"`,
+            `"${ledger.client.mobile_number}"`,
+            '0',
+            'No Activity',
+            '0',
+            '0', 
+            '0',
+            '0',
+            '0',
+            'Never'
+          ].join(','));
+        } else {
+          // Client with plate activity - one row per plate size
+          ledger.plate_balances.forEach(balance => {
+            const lastActivityDate = ledger.all_transactions.length > 0 
+              ? new Date(ledger.all_transactions[0].date).toLocaleDateString('en-GB')
+              : 'Never';
+              
+            csvRows.push([
+              `"${ledger.client.id}"`,
+              `"${ledger.client.name}"`,
+              `"${ledger.client.site}"`,
+              `"${ledger.client.mobile_number}"`,
+              ledger.total_outstanding.toString(),
+              `"${balance.plate_size}"`,
+              balance.total_borrowed.toString(),
+              balance.total_returned.toString(),
+              balance.outstanding.toString(),
+              ledger.active_challans.length.toString(),
+              ledger.completed_challans.length.toString(),
+              `"${lastActivityDate}"`
+            ].join(','));
+          });
+        }
+      });
+
+      // Create and download CSV file
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `ledger-backup-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      alert('Backup exported successfully!');
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      alert('Error creating backup. Please try again.');
+    }
+  };
   const filteredLedgers = clientLedgers.filter(ledger =>
     ledger.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ledger.client.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -280,12 +424,32 @@ export function MobileLedgerPage() {
 
   return (
     <div className="space-y-4 pb-4">
+      {/* Hidden Printable Challan */}
+      <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
+        {challanData && (
+          <div id={`challan-${challanData.challan_number}`}>
+            <PrintableChallan data={challanData} />
+          </div>
+        )}
+      </div>
+
       {/* Compact Header */}
       <div className="text-center pt-2">
         <h1 className="text-xl font-bold text-gray-900 mb-1">
           ખાતાવહી (Ledger)
         </h1>
         <p className="text-sm text-gray-600">Client rental history & balances</p>
+      </div>
+
+      {/* Backup Button */}
+      <div className="flex justify-center">
+        <button
+          onClick={handleBackupData}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+        >
+          <FileDown className="w-4 h-4" />
+          <T>Backup Data</T>
+        </button>
       </div>
 
       {/* Search Bar */}
@@ -347,7 +511,11 @@ export function MobileLedgerPage() {
                     <p className="text-sm">No rental activity yet</p>
                   </div>
                 ) : (
-                  <ClientActivityTable ledger={ledger} />
+                  <ClientActivityTable 
+                    ledger={ledger} 
+                    onDownloadChallan={handleDownloadChallan}
+                    downloading={downloading}
+                  />
                 )}
               </div>
             )}
@@ -370,9 +538,11 @@ export function MobileLedgerPage() {
 // New component for the comprehensive activity table
 interface ClientActivityTableProps {
   ledger: ClientLedger;
+  onDownloadChallan: (transaction: any, type: 'udhar' | 'jama') => void;
+  downloading: string | null;
 }
 
-function ClientActivityTable({ ledger }: ClientActivityTableProps) {
+function ClientActivityTable({ ledger, onDownloadChallan, downloading }: ClientActivityTableProps) {
   // Get all unique plate sizes from the client's activity (both issued and returned)
   const allPlateSizes = Array.from(new Set([
     ...ledger.plate_balances.map(b => b.plate_size),
@@ -417,6 +587,9 @@ function ClientActivityTable({ ledger }: ClientActivityTableProps) {
                   {size}
                 </th>
               ))}
+              <th className="px-2 py-3 text-center font-medium text-gray-700 min-w-[60px]">
+                Action
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -439,12 +612,15 @@ function ClientActivityTable({ ledger }: ClientActivityTableProps) {
                   </td>
                 );
               })}
+              <td className="px-2 py-3 text-center">
+                -
+              </td>
             </tr>
 
             {/* Challan Rows */}
             {allTransactions.length === 0 ? (
               <tr>
-                <td colSpan={allPlateSizes.length + 1} className="px-3 py-6 text-center text-gray-500">
+                <td colSpan={allPlateSizes.length + 2} className="px-3 py-6 text-center text-gray-500">
                   કોઈ ચલણ પ્રવૃત્તિ નથી
                   <br />
                   <span className="text-xs">No challan activity</span>
@@ -491,6 +667,19 @@ function ClientActivityTable({ ledger }: ClientActivityTableProps) {
                       </td>
                     );
                   })}
+                  <td className="px-2 py-3 text-center">
+                    <button
+                      onClick={() => onDownloadChallan(transaction, transaction.type)}
+                      disabled={downloading === `${transaction.type}-${transaction.id}`}
+                      className={`p-1 rounded-full transition-colors ${
+                        transaction.type === 'udhar'
+                          ? 'text-yellow-600 hover:bg-yellow-100'
+                          : 'text-green-600 hover:bg-green-100'
+                      } disabled:opacity-50`}
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
