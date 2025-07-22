@@ -35,6 +35,7 @@ export function MobileIssueRental() {
   const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('');
   const [challanDate, setChallanDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [plateNotes, setPlateNotes] = useState<Record<string, string>>({});
   const [stockData, setStockData] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(false);
   const [stockValidation, setStockValidation] = useState<StockValidation[]>([]);
@@ -197,7 +198,7 @@ export function MobileIssueRental() {
         challan_id: challan.id,
         plate_size: size,
         borrowed_quantity: quantities[size],
-        partner_stock_notes: null
+        partner_stock_notes: plateNotes[size]?.trim() || null
       }));
 
       const { error: lineItemsError } = await supabase
@@ -219,7 +220,7 @@ export function MobileIssueRental() {
         plates: validItems.map(size => ({
           size,
           quantity: quantities[size],
-          notes: '',
+          notes: plateNotes[size] || '',
         })),
         total_quantity: validItems.reduce((sum, size) => sum + quantities[size], 0)
       };
@@ -239,6 +240,7 @@ export function MobileIssueRental() {
         }
 
         setQuantities({});
+        setPlateNotes({});
         setChallanNumber('');
         setSelectedClient(null);
         setStockValidation([]);
@@ -361,7 +363,7 @@ export function MobileIssueRental() {
                       )}
                     </div>
                     
-                    <div>
+                    <div className="space-y-2">
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         <T>Quantity to Borrow</T>
                       </label>
@@ -382,6 +384,23 @@ export function MobileIssueRental() {
                           Insufficient stock (Available: {stockValidation.find(item => item.size === size)?.available})
                         </p>
                       )}
+                      
+                      {/* Individual Note Field */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          નોંધ (Note)
+                        </label>
+                        <textarea
+                          value={plateNotes[size] || ''}
+                          onChange={(e) => setPlateNotes(prev => ({
+                            ...prev,
+                            [size]: e.target.value
+                          }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm resize-none"
+                          rows={2}
+                          placeholder="Enter notes for this plate size..."
+                        />
+                      </div>
                     </div>
                   </div>
                 );
