@@ -4,8 +4,8 @@ import { supabase } from '../lib/supabase';
 
 interface RentalItem {
   id: string;
-  item_name: string;
-  quantity: number;
+  plate_size: string;
+  borrowed_quantity: number;
   returned_quantity: number;
   outstanding_quantity: number;
   issue_date: string;
@@ -33,8 +33,8 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
         .from('challan_items')
         .select(`
           id,
-          item_name,
-          quantity,
+          plate_size,
+          borrowed_quantity,
           returned_quantity,
           challans (
             id,
@@ -46,20 +46,20 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
             )
           )
         `)
-        .gt('quantity', 0)
+        .gt('borrowed_quantity', 0)
         .order('id', { ascending: false });
 
       if (error) throw error;
 
       const formattedRentals = data?.filter(item => {
-        const outstandingQty = (item.quantity || 0) - (item.returned_quantity || 0);
+        const outstandingQty = (item.borrowed_quantity || 0) - (item.returned_quantity || 0);
         return outstandingQty > 0;
       }).map(item => {
-        const outstandingQty = (item.quantity || 0) - (item.returned_quantity || 0);
+        const outstandingQty = (item.borrowed_quantity || 0) - (item.returned_quantity || 0);
         return {
           id: item.id,
-          item_name: item.item_name,
-          quantity: item.quantity || 0,
+          plate_size: item.plate_size,
+          borrowed_quantity: item.borrowed_quantity || 0,
           returned_quantity: item.returned_quantity || 0,
           outstanding_quantity: outstandingQty,
           issue_date: item.challans?.challan_date || '',
@@ -108,7 +108,7 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
         .from('return_line_items')
         .insert({
           return_id: returnData.id,
-          item_name: rental.item_name,
+          item_name: rental.plate_size,
           quantity: rental.outstanding_quantity
         });
 
@@ -118,7 +118,7 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
       const { error: updateError } = await supabase
         .from('challan_items')
         .update({ 
-          returned_quantity: rental.quantity
+          returned_quantity: rental.borrowed_quantity
         })
         .eq('id', challanItemId);
 
@@ -190,7 +190,7 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
               <div key={rental.id} className="bg-white rounded-lg shadow-sm border p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-800 mb-1">{rental.item_name}</h3>
+                    <h3 className="font-medium text-gray-800 mb-1">{rental.plate_size}</h3>
                     <div className="flex items-center text-sm text-gray-600 mb-1">
                       <User className="w-4 h-4 mr-1" />
                       {rental.client_name}
@@ -205,7 +205,7 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-gray-600">Outstanding: {rental.outstanding_quantity}</div>
-                    <div className="text-xs text-gray-500">Total: {rental.quantity}</div>
+                    <div className="text-xs text-gray-500">Total: {rental.borrowed_quantity}</div>
                   </div>
                 </div>
                 
