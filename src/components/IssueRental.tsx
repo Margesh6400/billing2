@@ -368,6 +368,23 @@ export function IssueRental() {
                     </th>
                     <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
                       Quantity to Borrow
+                      
+                      {/* Individual Note Field */}
+                      <div className="mt-2">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          નોંધ (Note)
+                        </label>
+                        <textarea
+                          value={plateNotes[size] || ''}
+                          onChange={(e) => setPlateNotes(prev => ({
+                            ...prev,
+                            [size]: e.target.value
+                          }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm resize-none"
+                          rows={2}
+                          placeholder="Enter notes for this plate size..."
+                        />
+                      </div>
                     </th>
                   </tr>
                 </thead>
@@ -415,27 +432,13 @@ export function IssueRental() {
               </table>
             </div>
 
-            {/* Overall Note Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                નોંધ (Note)
-              </label>
-              <textarea
-                value={overallNote}
-                onChange={(e) => setOverallNote(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base resize-none ${
-                  stockValidation.length > 0 && !overallNote.trim() 
-                    ? 'border-red-300' 
-                    : 'border-gray-300'
-                }`}
-                rows={3}
-                placeholder="Enter any notes for this challan (required if stock is insufficient)..."
-              />
-              {stockValidation.length > 0 && !overallNote.trim() && (
-                <p className="text-xs text-red-600 mt-1">
-                  Note is required when issuing items with insufficient stock
-                </p>
-              )}
+            {/* Subtotal */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-center">
+                <span className="text-xl font-semibold text-green-900">
+                  કુલ પ્લેટ : {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
+                </span>
+              </div>
             </div>
 
             {/* Submit Button */}

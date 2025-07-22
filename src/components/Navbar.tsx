@@ -99,9 +99,9 @@ export function Navbar() {
           />
           
           {/* Menu Panel */}
-          <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl">
+          <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 border-b h-14 bg-gray-50">
+            <div className="flex items-center justify-between px-4 border-b h-14 bg-gray-50 flex-shrink-0">
               <h2 className="text-lg font-bold text-gray-900">Navigation</h2>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -112,7 +112,7 @@ export function Navbar() {
             </div>
 
             {/* Navigation Cards */}
-            <div className="h-full p-4 pb-20 space-y-3 overflow-y-auto">
+            <div className="flex-1 p-4 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
               {NAVIGATION_ITEMS.map((item) => (
                 <Link
                   key={item.id}

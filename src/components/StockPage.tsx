@@ -47,18 +47,24 @@ export function StockPage() {
 
   const handleEdit = (item: Stock) => {
     setEditingItem(item.id)
-    setEditValues(item)
+    setEditValues({ total_quantity: item.total_quantity })
   }
 
   const handleSave = async () => {
     if (!editingItem || !editValues) return
 
     try {
+      const currentItem = stockItems.find(item => item.id === editingItem);
+      if (!currentItem) return;
+
+      // Calculate new available quantity: total - on_rent
+      const newAvailableQuantity = (editValues.total_quantity || currentItem.total_quantity) - currentItem.on_rent_quantity;
+
       const { error } = await supabase
         .from('stock')
         .update({
           total_quantity: editValues.total_quantity,
-          available_quantity: editValues.available_quantity,
+          available_quantity: Math.max(0, newAvailableQuantity), // Ensure non-negative
           updated_at: new Date().toISOString()
         })
         .eq('id', editingItem)
@@ -221,31 +227,29 @@ export function StockPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Available
+                      Available (Auto-calculated)
                     </label>
                     {isEditing ? (
-                      <input
-                        type="number"
-                        min="0"
-                        value={editValues.available_quantity || 0}
-                        onChange={(e) => setEditValues({
-                          ...editValues,
-                          available_quantity: parseInt(e.target.value) || 0
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-medium"
-                      />
+                      <div className="text-center py-2 text-gray-500 bg-gray-100 rounded-lg">
+                        {Math.max(0, (editValues.total_quantity || 0) - (item.on_rent_quantity || 0))}
+                        <div className="text-xs text-gray-400">Total - On Rent</div>
+                      </div>
                     ) : (
                       <p className={`text-2xl font-bold ${stockStatus.color}`}>
                         {item.available_quantity}
+                        <div className="text-xs text-gray-400">Auto-calculated</div>
                       </p>
                     )}
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      On Rent
+                      On Rent (Auto-updated)
                     </label>
-                    <p className="text-2xl font-bold text-blue-600">{item.on_rent_quantity}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {item.on_rent_quantity}
+                      <div className="text-xs text-gray-400">From transactions</div>
+                    </p>
                   </div>
                 </div>
 

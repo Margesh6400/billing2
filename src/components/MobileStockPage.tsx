@@ -27,13 +27,12 @@ interface StockRowProps {
 function StockRow({ plateSize, stockData, onUpdate }: StockRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValues, setEditValues] = useState({
-    total_quantity: stockData?.total_quantity || 0,
-    available_quantity: stockData?.available_quantity || 0,
+    total_quantity: stockData?.total_quantity || 0
   });
 
   const handleSave = async () => {
     try {
-      await onUpdate(plateSize, editValues);
+      await onUpdate(plateSize, { total_quantity: editValues.total_quantity });
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating stock:', error);
@@ -43,8 +42,7 @@ function StockRow({ plateSize, stockData, onUpdate }: StockRowProps) {
 
   const handleCancel = () => {
     setEditValues({
-      total_quantity: stockData?.total_quantity || 0,
-      available_quantity: stockData?.available_quantity || 0,
+      total_quantity: stockData?.total_quantity || 0
     });
     setIsEditing(false);
   };
@@ -73,17 +71,9 @@ function StockRow({ plateSize, stockData, onUpdate }: StockRowProps) {
               className="w-20 px-2 py-1 text-center border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </td>
-          <td className="px-3 py-3">
-            <input
-              type="number"
-              min="0"
-              value={editValues.available_quantity}
-              onChange={(e) => setEditValues(prev => ({
-                ...prev, 
-                available_quantity: parseInt(e.target.value) || 0
-              }))}
-              className="w-20 px-2 py-1 text-center border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+          <td className="px-3 py-3 text-center text-gray-500">
+            {stockData?.available_quantity || 0}
+            <div className="text-xs text-gray-400">Auto-calculated</div>
           </td>
           <td className="px-3 py-3 text-center text-blue-600 font-medium">
             {stockData?.on_rent_quantity || 0}
@@ -165,11 +155,14 @@ export function MobileStockPage() {
       const stockItem = stockItems.find(item => item.plate_size === plateSize);
       if (!stockItem) return;
 
+      // Calculate new available quantity based on total - on_rent
+      const newAvailableQuantity = (values.total_quantity || stockItem.total_quantity) - stockItem.on_rent_quantity;
+
       const { error } = await supabase
         .from('stock')
         .update({
           total_quantity: values.total_quantity,
-          available_quantity: values.available_quantity,
+          available_quantity: Math.max(0, newAvailableQuantity), // Ensure non-negative
           updated_at: new Date().toISOString()
         })
         .eq('id', stockItem.id);

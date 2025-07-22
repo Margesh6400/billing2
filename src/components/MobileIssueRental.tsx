@@ -35,7 +35,7 @@ export function MobileIssueRental() {
   const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('');
   const [challanDate, setChallanDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [overallNote, setOverallNote] = useState('');
+  const [plateNotes, setPlateNotes] = useState<Record<string, string>>({});
   const [stockData, setStockData] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(false);
   const [stockValidation, setStockValidation] = useState<StockValidation[]>([]);
@@ -179,7 +179,10 @@ export function MobileIssueRental() {
       }
 
       if (stockValidation.length > 0) {
-        if (!overallNote.trim()) {
+        const hasNotesForInsufficientStock = stockValidation.every(item => 
+          plateNotes[item.size]?.trim()
+        );
+        if (!hasNotesForInsufficientStock) {
           alert('Please add a note for items with insufficient stock.');
           return;
         }
@@ -201,7 +204,7 @@ export function MobileIssueRental() {
         challan_id: challan.id,
         plate_size: size,
         borrowed_quantity: quantities[size],
-        partner_stock_notes: overallNote.trim() || null
+        partner_stock_notes: plateNotes[size]?.trim() || null
       }));
 
       const { error: lineItemsError } = await supabase
@@ -223,7 +226,7 @@ export function MobileIssueRental() {
         plates: validItems.map(size => ({
           size,
           quantity: quantities[size],
-          notes: overallNote || '',
+          notes: plateNotes[size] || '',
         })),
         total_quantity: validItems.reduce((sum, size) => sum + quantities[size], 0)
       };
@@ -243,7 +246,7 @@ export function MobileIssueRental() {
         }
 
         setQuantities({});
-        setOverallNote('');
+        setPlateNotes({});
         setChallanNumber('');
         setSelectedClient(null);
         setStockValidation([]);

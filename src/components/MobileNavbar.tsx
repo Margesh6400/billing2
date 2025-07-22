@@ -116,7 +116,7 @@ export function MobileNavbar() {
           />
 
           {/* Menu Panel */}
-          <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out">
+          <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col">
             {/* Menu Header */}
             <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
               <h2 className="text-lg font-semibold">મેનુ</h2>
@@ -130,7 +130,7 @@ export function MobileNavbar() {
             </div>
 
             {/* User Info Section */}
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
               <div className="flex items-center space-x-3">
                 {/* User Avatar */}
                 <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
@@ -159,7 +159,7 @@ export function MobileNavbar() {
             </div>
 
             {/* Navigation Items */}
-            <nav className="flex-1 overflow-y-auto py-4">
+            <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-gray-300">
               {NAVIGATION_ITEMS.map((item) => (
                 <Link
                   key={item.key}
@@ -177,7 +177,7 @@ export function MobileNavbar() {
             </nav>
 
             {/* Settings & Sign Out */}
-            <div className="border-t border-gray-200 p-4 space-y-2">
+            <div className="border-t border-gray-200 p-4 space-y-2 flex-shrink-0">
               <button
                 onClick={() => {/* Add settings logic */}}
                 className="w-full flex items-center space-x-4 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors min-h-[48px]"
