@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../lib/supabase';
 import { ClientSelector } from './ClientSelector';
-import { RotateCcw, Package, Save, Loader2, Calendar, Eye, EyeOff, User, Hash, MapPin, Search } from 'lucide-react';
+import { RotateCcw, Package, Save, Loader2, Calendar, User, Hash, MapPin, Search } from 'lucide-react';
 import { PrintableChallan } from './challans/PrintableChallan';
 import { generateJPGChallan, downloadJPGChallan } from '../utils/jpgChallanGenerator';
 import { ChallanData } from './challans/types';
@@ -29,7 +29,6 @@ export function MobileReturnPage() {
   const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [plateNotes, setPlateNotes] = useState<Record<string, string>>({});
-  const [overallNote, setOverallNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [challanData, setChallanData] = useState<ChallanData | null>(null);
   const [clientOutstandingPlates, setClientOutstandingPlates] = useState<Record<string, number>>({});
@@ -48,7 +47,6 @@ export function MobileReturnPage() {
     if (!selectedClient) return;
 
     try {
-      // Fetch all challans for this client
       const { data: challans, error: challansError } = await supabase
         .from('challans')
         .select(`
@@ -61,7 +59,6 @@ export function MobileReturnPage() {
 
       if (challansError) throw challansError;
 
-      // Fetch all returns for this client
       const { data: returns, error: returnsError } = await supabase
         .from('returns')
         .select(`
@@ -74,24 +71,20 @@ export function MobileReturnPage() {
 
       if (returnsError) throw returnsError;
 
-      // Calculate outstanding plates per size
       const outstanding: Record<string, number> = {};
 
-      // Add borrowed quantities
       challans?.forEach(challan => {
         challan.challan_items.forEach(item => {
           outstanding[item.plate_size] = (outstanding[item.plate_size] || 0) + item.borrowed_quantity;
         });
       });
 
-      // Subtract returned quantities
       returns?.forEach(returnRecord => {
         returnRecord.return_line_items.forEach(item => {
           outstanding[item.plate_size] = (outstanding[item.plate_size] || 0) - item.returned_quantity;
         });
       });
 
-      // Filter out zero or negative values
       const filteredOutstanding: Record<string, number> = {};
       Object.entries(outstanding).forEach(([size, qty]) => {
         if (qty > 0) {
@@ -107,7 +100,6 @@ export function MobileReturnPage() {
 
   const generateNextChallanNumber = async () => {
     try {
-      // Fetch all existing return challans to find the highest numeric value
       const { data, error } = await supabase
         .from('returns')
         .select('return_challan_number')
@@ -117,7 +109,6 @@ export function MobileReturnPage() {
 
       let maxNumber = 0;
       if (data && data.length > 0) {
-        // Extract all numeric values and find the absolute maximum
         data.forEach(returnChallan => {
           const match = returnChallan.return_challan_number.match(/\d+/);
           if (match) {
@@ -129,17 +120,14 @@ export function MobileReturnPage() {
         });
       }
 
-      // Always increment by 1 from the highest found number
       const nextNumber = (maxNumber + 1).toString();
       setSuggestedChallanNumber(nextNumber);
       
-      // Set as default only if current challan number is empty
       if (!returnChallanNumber) {
         setReturnChallanNumber(nextNumber);
       }
     } catch (error) {
       console.error('Error generating return challan number:', error);
-      // Fallback to timestamp-based number
       const fallback = '1';
       setSuggestedChallanNumber(fallback);
       if (!returnChallanNumber) {
@@ -151,7 +139,6 @@ export function MobileReturnPage() {
   const handleChallanNumberChange = (value: string) => {
     setReturnChallanNumber(value);
     
-    // If user clears the input, suggest the next available number
     if (!value.trim()) {
       setReturnChallanNumber(suggestedChallanNumber);
     }
@@ -283,7 +270,7 @@ export function MobileReturnPage() {
   };
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="min-h-screen bg-gray-50 pb-8">
       {/* Hidden Printable Challan */}
       <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
         {challanData && (
@@ -293,201 +280,219 @@ export function MobileReturnPage() {
         )}
       </div>
 
-      {/* Header */}
-      <div className="text-center pt-2">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">
-          <T>Return Challan</T>
+      {/* Compact Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 shadow-lg">
+        <h1 className="text-lg font-bold text-center">
+          જમા ચલણ (Return Challan)
         </h1>
-        <p className="text-sm text-gray-600">જમા ચલણ - Process plate returns</p>
       </div>
 
-      {/* Client Selection */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <User className="w-5 h-5 text-blue-600" />
-            Select Client (Existing Only)
-          </h2>
+      <div className="px-4 py-4 space-y-4">
+        {/* Client Selection */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-4 border-b border-gray-200 bg-blue-50">
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-600" />
+              Select Client (Existing Only)
+            </h2>
+          </div>
+          
+          <div className="p-4">
+            {selectedClient ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Hash className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Client ID</label>
+                      <p className="text-sm font-semibold text-gray-900">{selectedClient.id}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <User className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Name</label>
+                      <p className="text-sm font-semibold text-gray-900">{selectedClient.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Site</label>
+                      <p className="text-sm font-semibold text-gray-900">{selectedClient.site}</p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedClient(null);
+                    setQuantities({});
+                    setPlateNotes({});
+                    setClientOutstandingPlates({});
+                  }}
+                  className="w-full text-blue-600 hover:text-blue-700 text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-50 transition-colors border border-blue-200"
+                >
+                  Change Client
+                </button>
+              </div>
+            ) : (
+              <ReturnClientSelector 
+                onClientSelect={(client) => {
+                  setSelectedClient(client);
+                  setQuantities({});
+                  setPlateNotes({});
+                }}
+              />
+            )}
+          </div>
         </div>
-        
-        {selectedClient ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Hash className="w-5 h-5 text-gray-500" />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Client ID</label>
-                  <p className="text-gray-900 font-semibold">{selectedClient.id}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <User className="w-5 h-5 text-gray-500" />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <p className="text-gray-900 font-semibold">{selectedClient.name}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <MapPin className="w-5 h-5 text-gray-500" />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Site</label>
-                  <p className="text-gray-900 font-semibold">{selectedClient.site}</p>
-                </div>
+
+        {/* Return Form */}
+        {selectedClient && Object.keys(clientOutstandingPlates).length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-4 border-b border-gray-200 bg-blue-50">
+              <div className="flex items-center gap-2">
+                <RotateCcw className="w-5 h-5 text-blue-600" />
+                <h2 className="font-semibold text-gray-900">
+                  <T>Return Plates</T>
+                </h2>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setSelectedClient(null);
-                setQuantities({});
-                setPlateNotes({});
-                setClientOutstandingPlates({});
-              }}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-            >
-              Change Client
-            </button>
+
+            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+              {/* Return Details */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Return Challan Number *
+                  </label>
+                  <input
+                    type="text"
+                    value={returnChallanNumber}
+                    onChange={(e) => handleChallanNumberChange(e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder={suggestedChallanNumber}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    <T>Return Date</T> *
+                  </label>
+                  <input
+                    type="date"
+                    value={returnDate}
+                    onChange={(e) => setReturnDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Outstanding Plates Table */}
+              <div className="overflow-hidden border border-gray-200 rounded-lg">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Plate Size
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Outstanding
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Return Qty
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {Object.entries(clientOutstandingPlates).map(([size, outstandingQty]) => (
+                      <tr key={size} className="hover:bg-gray-50">
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2">
+                            <Package className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium text-gray-900 text-sm">{size}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <span className="text-sm font-medium text-red-600">
+                            {outstandingQty}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="number"
+                            min="0"
+                            max={outstandingQty}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={quantities[size] || ''}
+                            onChange={(e) => handleQuantityChange(size, e.target.value)}
+                            placeholder="0"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Notes Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  નોંધ (Notes)
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                  rows={2}
+                  placeholder="નુકસાન, ખોટ વગેરે માટે નોંધ લખો..."
+                />
+              </div>
+
+              {/* Total */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="text-center">
+                  <span className="text-lg font-bold text-blue-900">
+                    કુલ પ્લેટ્સ: {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
+                  {loading ? 'પ્રક્રિયા કરી રહ્યા છીએ...' : 'જમા કરો'}
+                </button>
+              </div>
+            </form>
           </div>
-        ) : (
-          <ReturnClientSelector 
-            onClientSelect={(client) => {
-              setSelectedClient(client);
-              setQuantities({});
-              setPlateNotes({});
-            }}
-          />
+        )}
+
+        {selectedClient && Object.keys(clientOutstandingPlates).length === 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+            <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500">This client has no outstanding plates to return.</p>
+          </div>
         )}
       </div>
 
-      {/* Return Form */}
-      {selectedClient && Object.keys(clientOutstandingPlates).length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <RotateCcw className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              <T>Return Plates</T>
-            </h2>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Return Details */}
-            <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Return Challan Number *
-                </label>
-                <input
-                  type="text"
-                  value={returnChallanNumber}
-                  onChange={(e) => handleChallanNumberChange(e.target.value)}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                  placeholder={`Suggested: ${suggestedChallanNumber}`}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <T>Return Date</T> *
-                </label>
-                <input
-                  type="date"
-                  value={returnDate}
-                  onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Outstanding Plates List */}
-            <div className="space-y-3">
-              {Object.entries(clientOutstandingPlates).map(([size, outstandingQty]) => (
-                <div key={size} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium text-gray-900">{size}</span>
-                    </div>
-                    <span className="text-xs text-red-600 font-medium">
-                      Outstanding: {outstandingQty}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        <T>Quantity Returned</T>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={outstandingQty}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                        value={quantities[size] || ''}
-                        onChange={(e) => handleQuantityChange(size, e.target.value)}
-                        placeholder="0"
-                      />
-                    </div>
-                    
-                    {/* Individual Note Field */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        નોંધ (Note)
-                      </label>
-                      <textarea
-                        value={plateNotes[size] || ''}
-                        onChange={(e) => setPlateNotes(prev => ({
-                          ...prev,
-                          [size]: e.target.value
-                        }))}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm resize-none"
-                        rows={2}
-                        placeholder="Enter notes for damage, loss, etc..."
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Subtotal */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="text-center">
-                <span className="text-lg font-semibold text-blue-900">
-                  કુલ પ્લેટ : {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
-                </span>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-base"
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Save className="w-5 h-5" />
-              )}
-              {loading ? 'Processing...' : <T>Submit Return</T>}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {selectedClient && Object.keys(clientOutstandingPlates).length === 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-          <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500">This client has no outstanding plates to return.</p>
-        </div>
-      )}
+      {/* Bottom Padding */}
+      <div className="h-20"></div>
     </div>
   );
 }
 
-// New component for return client selection (without add client option)
+// Return Client Selector Component
 interface ReturnClientSelectorProps {
   onClientSelect: (client: Client) => void;
 }
@@ -524,48 +529,44 @@ function ReturnClientSelector({ onClientSelect }: ReturnClientSelectorProps) {
   );
 
   return (
-    <div>
-      <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-            placeholder="Search existing clients..."
-          />
-        </div>
+    <div className="space-y-3">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          placeholder="Search existing clients..."
+        />
       </div>
 
-      <div className="max-h-60 overflow-y-auto">
+      <div className="max-h-48 overflow-y-auto space-y-2">
         {loading ? (
-          <div className="text-center py-8 text-gray-500">Loading clients...</div>
+          <div className="text-center py-4 text-gray-500 text-sm">Loading clients...</div>
         ) : filteredClients.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-4 text-gray-500 text-sm">
             {searchTerm ? 'No clients found' : 'No clients available'}
           </div>
         ) : (
-          <div className="space-y-3">
-            {filteredClients.map((client) => (
-              <button
-                key={client.id}
-                onClick={() => onClientSelect(client)}
-                className="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-base">{client.name}</p>
-                    <p className="text-sm text-gray-600 mt-1">ID: {client.id}</p>
-                  </div>
-                  <div className="text-right ml-4">
-                    <p className="text-sm text-gray-600">{client.site}</p>
-                    <p className="text-xs text-gray-500 mt-1">{client.mobile_number}</p>
-                  </div>
+          filteredClients.map((client) => (
+            <button
+              key={client.id}
+              onClick={() => onClientSelect(client)}
+              className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900 text-sm">{client.name}</p>
+                  <p className="text-xs text-gray-600 mt-1">ID: {client.id}</p>
                 </div>
-              </button>
-            ))}
-          </div>
+                <div className="text-right ml-3">
+                  <p className="text-xs text-gray-600">{client.site}</p>
+                  <p className="text-xs text-gray-500 mt-1">{client.mobile_number}</p>
+                </div>
+              </div>
+            </button>
+          ))
         )}
       </div>
     </div>

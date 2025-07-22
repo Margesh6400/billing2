@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../lib/supabase';
 import { ClientSelector } from './ClientSelector';
-import { FileText, Package, Save, Loader2, Calendar, Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react';
+import { FileText, Package, Save, Loader2, Calendar, AlertTriangle } from 'lucide-react';
 import { PrintableChallan } from './challans/PrintableChallan';
 import { generateJPGChallan, downloadJPGChallan } from '../utils/jpgChallanGenerator';
 import { ChallanData } from './challans/types';
@@ -68,7 +68,6 @@ export function MobileIssueRental() {
 
   const generateNextChallanNumber = async () => {
     try {
-      // Fetch all existing issue challans to find the highest numeric value
       const { data, error } = await supabase
         .from('challans')
         .select('challan_number')
@@ -78,7 +77,6 @@ export function MobileIssueRental() {
 
       let maxNumber = 0
       if (data && data.length > 0) {
-        // Extract all numeric values and find the absolute maximum
         data.forEach(challan => {
           const match = challan.challan_number.match(/\d+/)
           if (match) {
@@ -90,17 +88,14 @@ export function MobileIssueRental() {
         })
       }
 
-      // Always increment by 1 from the highest found number
       const nextNumber = (maxNumber + 1).toString()
       setSuggestedChallanNumber(nextNumber)
       
-      // Set as default only if current challan number is empty
       if (!challanNumber) {
         setChallanNumber(nextNumber)
       }
     } catch (error) {
       console.error('Error generating challan number:', error)
-      // Fallback to timestamp-based number
       const fallback = '1'
       setSuggestedChallanNumber(fallback)
       if (!challanNumber) {
@@ -112,7 +107,6 @@ export function MobileIssueRental() {
   const handleChallanNumberChange = (value: string) => {
     setChallanNumber(value);
     
-    // If user clears the input, suggest the next available number
     if (!value.trim()) {
       setChallanNumber(suggestedChallanNumber);
     }
@@ -176,10 +170,6 @@ export function MobileIssueRental() {
       if (validItems.length === 0) {
         alert('Please enter at least one plate quantity.');
         return;
-      }
-
-      if (stockValidation.length > 0) {
-        // Allow issuing with insufficient stock without requiring notes
       }
 
       const { data: challan, error: challanError } = await supabase
@@ -263,7 +253,7 @@ export function MobileIssueRental() {
   };
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="min-h-screen bg-gray-50 pb-8">
       {/* Hidden Printable Challan */}
       <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
         {challanData && (
@@ -273,159 +263,175 @@ export function MobileIssueRental() {
         )}
       </div>
 
-      {/* Header */}
-      <div className="text-center pt-2">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">
-          <T>Issue Challan</T>
+      {/* Compact Header */}
+      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 shadow-lg">
+        <h1 className="text-lg font-bold text-center">
+          ઉધાર ચલણ (Issue Challan)
         </h1>
-        <p className="text-sm text-gray-600">ઉધાર ચલણ - Create new rental</p>
       </div>
 
-      {/* Client Selection */}
-      <ClientSelector 
-        onClientSelect={setSelectedClient}
-        selectedClient={selectedClient}
-      />
+      <div className="px-4 py-4 space-y-4">
+        {/* Client Selection */}
+        <ClientSelector 
+          onClientSelect={setSelectedClient}
+          selectedClient={selectedClient}
+        />
 
-      {/* Rental Form */}
-      {selectedClient && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <FileText className="w-5 h-5 text-green-600" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              <T>Issue Plates</T>
-            </h2>
-          </div>
+        {/* Rental Form */}
+        {selectedClient && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-4 border-b border-gray-200 bg-green-50">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-green-600" />
+                <h2 className="font-semibold text-gray-900">
+                  <T>Issue Plates</T>
+                </h2>
+              </div>
+            </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Challan Details */}
-            <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-3">
+            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+              {/* Challan Details */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <T>Challan Number</T> *
+                  </label>
+                  <input
+                    type="text"
+                    value={challanNumber}
+                    onChange={(e) => handleChallanNumberChange(e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+                    placeholder={suggestedChallanNumber}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    <T>Date</T> *
+                  </label>
+                  <input
+                    type="date"
+                    value={challanDate}
+                    onChange={(e) => setChallanDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Stock Warning */}
+              {stockValidation.length > 0 && (
+                <div className="flex items-center gap-2 text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm">કેટલીક વસ્તુઓમાં અપૂરતો સ્ટોક છે</span>
+                </div>
+              )}
+
+              {/* Plates Table */}
+              <div className="overflow-hidden border border-gray-200 rounded-lg">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Plate Size
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Stock
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Quantity
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {PLATE_SIZES.map(size => {
+                      const stockInfo = getStockInfo(size);
+                      const isInsufficient = isStockInsufficient(size);
+                      
+                      return (
+                        <tr key={size} className={`${isInsufficient ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              <Package className="w-4 h-4 text-gray-400" />
+                              <span className="font-medium text-gray-900 text-sm">{size}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`text-sm ${stockInfo ? 'text-gray-600' : 'text-red-500'}`}>
+                              {stockInfo ? stockInfo.available_quantity : 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3">
+                            <input
+                              type="number"
+                              min="0"
+                              className={`w-full px-2 py-1 border rounded text-center text-sm ${
+                                isInsufficient 
+                                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                  : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
+                              }`}
+                              value={quantities[size] || ''}
+                              onChange={(e) => handleQuantityChange(size, e.target.value)}
+                              placeholder="0"
+                            />
+                            {isInsufficient && (
+                              <p className="text-xs text-red-600 mt-1 text-center">
+                                મર્યાદા: {stockValidation.find(item => item.size === size)?.available}
+                              </p>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Notes Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <T>Challan Number</T> *
+                  નોંધ (Notes)
                 </label>
-                <input
-                  type="text"
-                  value={challanNumber}
-                  onChange={(e) => handleChallanNumberChange(e.target.value)}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
-                  placeholder={`Suggested: ${suggestedChallanNumber}`}
-                  required
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm resize-none"
+                  rows={2}
+                  placeholder="કોઈ ખાસ નોંધ લખો..."
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <T>Date</T> *
-                </label>
-                <input
-                  type="date"
-                  value={challanDate}
-                  onChange={(e) => setChallanDate(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base"
-                  required
-                />
+
+              {/* Total */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="text-center">
+                  <span className="text-lg font-bold text-green-900">
+                    કુલ પ્લેટ્સ: {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            {/* Stock Validation Warning */}
-            {stockValidation.length > 0 && (
-              <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg">
-                <AlertTriangle className="w-4 h-4" />
-                <span className="text-sm font-medium">Some items have insufficient stock.</span>
+              {/* Submit Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
+                  {loading ? 'બનાવી રહ્યા છીએ...' : 'ચલણ બનાવો'}
+                </button>
               </div>
-            )}
+            </form>
+          </div>
+        )}
+      </div>
 
-            {/* Plates List */}
-            <div className="space-y-3">
-              {PLATE_SIZES.map(size => {
-                const stockInfo = getStockInfo(size);
-                const isInsufficient = isStockInsufficient(size);
-                
-                return (
-                  <div key={size} className={`border rounded-lg p-3 ${isInsufficient ? 'border-red-200 bg-red-50' : 'border-gray-200'}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium text-gray-900">{size}</span>
-                      </div>
-                      {stockInfo && (
-                        <span className="text-xs text-gray-500">
-                          Available: {stockInfo.available_quantity}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        <T>Quantity to Borrow</T>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 text-base ${
-                          isInsufficient 
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                            : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
-                        }`}
-                        value={quantities[size] || ''}
-                        onChange={(e) => handleQuantityChange(size, e.target.value)}
-                        placeholder="0"
-                      />
-                      {isInsufficient && (
-                        <p className="text-xs text-red-600 mt-1">
-                          Insufficient stock (Available: {stockValidation.find(item => item.size === size)?.available})
-                        </p>
-                      )}
-                      
-                      {/* Individual Note Field */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
-                          નોંધ (Note)
-                        </label>
-                        <textarea
-                          value={plateNotes[size] || ''}
-                          onChange={(e) => setPlateNotes(prev => ({
-                            ...prev,
-                            [size]: e.target.value
-                          }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm resize-none"
-                          rows={2}
-                          placeholder="Enter notes for this plate size..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Subtotal */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="text-center">
-                <span className="text-xl font-semibold text-green-900">
-                  કુલ પ્લેટ : {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
-                </span>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-base"
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Save className="w-5 h-5" />
-              )}
-              {loading ? 'Creating...' : <T>Create Challan</T>}
-            </button>
-          </form>
-        </div>
-      )}
+      {/* Bottom Padding */}
+      <div className="h-20"></div>
     </div>
   );
 }
