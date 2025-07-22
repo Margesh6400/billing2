@@ -25,12 +25,68 @@ const PLATE_SIZES = [
 export function MobileReturnPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [returnChallanNumber, setReturnChallanNumber] = useState('');
+  const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('');
   const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [showNotesColumn, setShowNotesColumn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [challanData, setChallanData] = useState<ChallanData | null>(null);
+
+  useEffect(() => {
+    generateNextChallanNumber();
+  }, []);
+
+  const generateNextChallanNumber = async () => {
+    try {
+      // Fetch all existing return challans to find the highest number
+      const { data, error } = await supabase
+        .from('returns')
+        .select('return_challan_number')
+        .order('id', { ascending: false });
+
+      if (error) throw error;
+
+      let maxNumber = 0;
+      if (data && data.length > 0) {
+        // Extract numeric values from return challan numbers and find the maximum
+        data.forEach(returnChallan => {
+          const match = returnChallan.return_challan_number.match(/\d+/);
+          if (match) {
+            const num = parseInt(match[0]);
+            if (num > maxNumber) {
+              maxNumber = num;
+            }
+          }
+        });
+      }
+
+      const nextNumber = (maxNumber + 1).toString();
+      setSuggestedChallanNumber(nextNumber);
+      
+      // Set as default only if current challan number is empty
+      if (!returnChallanNumber) {
+        setReturnChallanNumber(nextNumber);
+      }
+    } catch (error) {
+      console.error('Error generating return challan number:', error);
+      // Fallback to timestamp-based number
+      const fallback = Date.now().toString().slice(-6);
+      setSuggestedChallanNumber(fallback);
+      if (!returnChallanNumber) {
+        setReturnChallanNumber(fallback);
+      }
+    }
+  };
+
+  const handleChallanNumberChange = (value: string) => {
+    setReturnChallanNumber(value);
+    
+    // If user clears the input, suggest the next available number
+    if (!value.trim()) {
+      setReturnChallanNumber(suggestedChallanNumber);
+    }
+  };
 
   const handleQuantityChange = (size: string, value: string) => {
     const quantity = parseInt(value) || 0;
@@ -214,9 +270,10 @@ export function MobileReturnPage() {
                 <input
                   type="text"
                   value={returnChallanNumber}
-                  onChange={(e) => setReturnChallanNumber(e.target.value)}
+                  onChange={(e) => handleChallanNumberChange(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                  placeholder="Enter return challan number"
+                  placeholder={`Suggested: ${suggestedChallanNumber}`}
                   required
                 />
               </div>
