@@ -35,8 +35,6 @@ export function MobileIssueRental() {
   const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('');
   const [challanDate, setChallanDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [plateNotes, setPlateNotes] = useState<Record<string, string>>({});
-  const [overallNote, setOverallNote] = useState('');
   const [stockData, setStockData] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(false);
   const [stockValidation, setStockValidation] = useState<StockValidation[]>([]);
@@ -180,13 +178,7 @@ export function MobileIssueRental() {
       }
 
       if (stockValidation.length > 0) {
-        const hasNotesForInsufficientStock = stockValidation.every(item => 
-          overallNote.trim()
-        );
-        if (!hasNotesForInsufficientStock) {
-          alert('Please add a note when issuing items with insufficient stock.');
-          return;
-        }
+        // Allow issuing with insufficient stock without requiring notes
       }
 
       const { data: challan, error: challanError } = await supabase
@@ -205,7 +197,7 @@ export function MobileIssueRental() {
         challan_id: challan.id,
         plate_size: size,
         borrowed_quantity: quantities[size],
-        partner_stock_notes: overallNote.trim() || null
+        partner_stock_notes: null
       }));
 
       const { error: lineItemsError } = await supabase
@@ -227,7 +219,7 @@ export function MobileIssueRental() {
         plates: validItems.map(size => ({
           size,
           quantity: quantities[size],
-          notes: overallNote || '',
+          notes: '',
         })),
         total_quantity: validItems.reduce((sum, size) => sum + quantities[size], 0)
       };
@@ -247,7 +239,6 @@ export function MobileIssueRental() {
         }
 
         setQuantities({});
-        setOverallNote('');
         setChallanNumber('');
         setSelectedClient(null);
         setStockValidation([]);
@@ -346,7 +337,7 @@ export function MobileIssueRental() {
             {stockValidation.length > 0 && (
               <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg">
                 <AlertTriangle className="w-4 h-4" />
-                <span className="text-sm font-medium">Some items have insufficient stock. Please add a note below.</span>
+                <span className="text-sm font-medium">Some items have insufficient stock.</span>
               </div>
             )}
 
@@ -397,27 +388,13 @@ export function MobileIssueRental() {
               })}
             </div>
 
-            {/* Overall Note Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                નોંધ (Note)
-              </label>
-              <textarea
-                value={overallNote}
-                onChange={(e) => setOverallNote(e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base resize-none ${
-                  stockValidation.length > 0 && !overallNote.trim() 
-                    ? 'border-red-300' 
-                    : 'border-gray-300'
-                }`}
-                rows={3}
-                placeholder="Enter any notes for this challan (required if stock is insufficient)..."
-              />
-              {stockValidation.length > 0 && !overallNote.trim() && (
-                <p className="text-xs text-red-600 mt-1">
-                  Note is required when issuing items with insufficient stock
-                </p>
-              )}
+            {/* Subtotal */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-center">
+                <span className="text-xl font-semibold text-green-900">
+                  કુલ પ્લેટ : {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
+                </span>
+              </div>
             </div>
 
             {/* Submit Button */}

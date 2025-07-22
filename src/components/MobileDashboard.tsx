@@ -18,7 +18,10 @@ import {
   Wind,
   Droplets,
   Bell,
-  Activity
+  Activity,
+  DollarSign,
+  BarChart3,
+  RotateCcw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -30,6 +33,9 @@ interface DashboardStats {
   totalClients: number;
   lowStockItems: number;
   overdueChallans: number;
+  pendingBills: number;
+  totalRevenue: number;
+  totalStock: number;
 }
 
 interface RecentActivity {
@@ -60,16 +66,29 @@ export function MobileDashboard() {
     onRentPlates: 0,
     totalClients: 0,
     lowStockItems: 0,
-    overdueChallans: 0
+    overdueChallans: 0,
+    pendingBills: 0,
+    totalRevenue: 0,
+    totalStock: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [lowStockAlerts, setLowStockAlerts] = useState<LowStockAlert[]>([]);
   const [weather] = useState<WeatherData>({
-    temperature: 28,
+    temperature: 32,
     condition: 'sunny',
-    humidity: 65
+    humidity: 45
   });
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
@@ -84,12 +103,14 @@ export function MobileDashboard() {
         clientsResult,
         challansResult,
         stockResult,
-        returnsResult
+        returnsResult,
+        billsResult
       ] = await Promise.all([
         supabase.from('clients').select('id', { count: 'exact' }),
         supabase.from('challans').select('id, status, challan_date, challan_number, client:clients(name)', { count: 'exact' }),
         supabase.from('stock').select('*'),
-        supabase.from('returns').select('id, return_challan_number, client:clients(name), created_at', { count: 'exact' })
+        supabase.from('returns').select('id, return_challan_number, client:clients(name), created_at', { count: 'exact' }),
+        supabase.from('bills').select('total_amount, payment_status', { count: 'exact' })
       ]);
 
       // Calculate stats
@@ -100,6 +121,7 @@ export function MobileDashboard() {
       const stockData = stockResult.data || [];
       const onRentPlates = stockData.reduce((sum, item) => sum + item.on_rent_quantity, 0);
       const lowStockItems = stockData.filter(item => item.available_quantity < 10).length;
+      const totalStock = stockData.reduce((sum, item) => sum + item.total_quantity, 0);
       
       // Calculate overdue challans (older than 30 days)
       const thirtyDaysAgo = new Date();
@@ -108,13 +130,23 @@ export function MobileDashboard() {
         c.status === 'active' && new Date(c.challan_date) < thirtyDaysAgo
       ).length || 0;
 
+      // Calculate bills stats
+      const billsData = billsResult.data || [];
+      const pendingBills = billsData.filter(bill => bill.payment_status === 'pending').length;
+      const totalRevenue = billsData
+        .filter(bill => bill.payment_status === 'paid')
+        .reduce((sum, bill) => sum + (bill.total_amount || 0), 0);
+
       setStats({
         activeUdharChallans,
         pendingJamaReturns,
         onRentPlates,
         totalClients,
         lowStockItems,
-        overdueChallans
+        overdueChallans,
+        pendingBills,
+        totalRevenue,
+        totalStock
       });
 
       // Set recent activity
@@ -165,11 +197,17 @@ export function MobileDashboard() {
   };
 
   const getGujaratiDate = () => {
-    const today = new Date();
+    const today = currentTime;
     const dayNames = ['રવિવાર', 'સોમવાર', 'મંગળવાર', 'બુધવાર', 'ગુરુવાર', 'શુક્રવાર', 'શનિવાર'];
     const monthNames = ['જાન્યુઆરી', 'ફેબ્રુઆરી', 'માર્ચ', 'એપ્રિલ', 'મે', 'જૂન', 'જુલાઈ', 'ઓગસ્ટ', 'સપ્ટેમ્બર', 'ઓક્ટોબર', 'નવેમ્બર', 'ડિસેમ્બર'];
     
-    return `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]}, ${today.getFullYear()}`;
+    const timeString = today.toLocaleTimeString('en-IN', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true 
+    });
+    
+    return `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]}, ${today.getFullYear()} · ${timeString}`;
   };
 
   const getTimeAgo = (dateString: string) => {
@@ -198,186 +236,179 @@ export function MobileDashboard() {
 
   return (
     <div className="space-y-6 pb-24">
-      {/* Header with Weather */}
-      <div className="flex justify-between items-start pt-2">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            સેન્ટરિંગ પ્લેટ્સ ભાડા
-          </h1>
-          <p className="text-sm text-gray-600">{getGujaratiDate()}</p>
-        </div>
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200">
-          <div className="flex items-center gap-2">
+      {/* Time and Date Header */}
+      <div className="text-center pt-4">
+        <h1 className="text-lg font-bold text-gray-900 mb-2">
+          સેન્ટરિંગ પ્લેટ્સ ભાડા સિસ્ટમ
+        </h1>
+        <p className="text-base text-gray-700 font-medium mb-4">
+          {getGujaratiDate()}
+        </p>
+      </div>
+
+      {/* Weather Widget */}
+      <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             {getWeatherIcon()}
-            <div className="text-right">
-              <div className="text-lg font-bold text-gray-900">{weather.temperature}°C</div>
-              <div className="text-xs text-gray-500 flex items-center gap-1">
-                <Droplets className="w-3 h-3" />
-                {weather.humidity}%
-              </div>
+            <div>
+              <div className="text-2xl font-bold">{weather.temperature}°C</div>
+              <div className="text-sm opacity-90 capitalize">Partly Cloudy</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-lg font-semibold">અમદાવાદ</div>
+            <div className="text-sm opacity-90 flex items-center gap-1">
+              <Droplets className="w-3 h-3" />
+              {weather.humidity}% ભેજ
             </div>
           </div>
         </div>
       </div>
 
-      {/* Alerts Section */}
+      {/* Summary Metrics - Horizontal Scroll */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3 px-1">
+          વ્યવસાયિક સારાંશ
+        </h2>
+        <div className="overflow-x-auto pb-2">
+          <div className="flex gap-4 min-w-max">
+            <MetricCard
+              title="કુલ ગ્રાહકો"
+              value={stats.totalClients}
+              icon={Users}
+              color="from-blue-500 to-blue-600"
+            />
+            <MetricCard
+              title="સક્રિય ભાડા"
+              value={stats.activeUdharChallans}
+              icon={FileText}
+              color="from-green-500 to-green-600"
+            />
+            <MetricCard
+              title="બાકી વળતર"
+              value={stats.pendingJamaReturns}
+              icon={Clock}
+              color="from-yellow-500 to-yellow-600"
+            />
+            <MetricCard
+              title="કુલ સ્ટોક"
+              value={stats.totalStock}
+              icon={Package}
+              color="from-purple-500 to-purple-600"
+            />
+            <MetricCard
+              title="ઓછો સ્ટોક"
+              value={stats.lowStockItems}
+              icon={AlertTriangle}
+              color="from-red-500 to-red-600"
+            />
+            <MetricCard
+              title="બાકી બિલ"
+              value={stats.pendingBills}
+              icon={DollarSign}
+              color="from-orange-500 to-orange-600"
+            />
+            <MetricCard
+              title="કુલ આવક"
+              value={`₹${stats.totalRevenue.toLocaleString('en-IN')}`}
+              icon={TrendingUp}
+              color="from-indigo-500 to-indigo-600"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Access */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 px-1">
+          ઝડપી પ્રવેશ
+        </h2>
+        <div className="grid grid-cols-2 gap-4">
+          <QuickAccessCard
+            to="/issue"
+            title="ઉધાર ચલણ બનાવો"
+            subtitle="નવું ઉધાર"
+            icon={FileText}
+            color="from-green-500 to-green-600"
+          />
+          <QuickAccessCard
+            to="/return"
+            title="જમા ચલણ બનાવો"
+            subtitle="પ્લેટ્સ પરત"
+            icon={RotateCcw}
+            color="from-blue-500 to-blue-600"
+          />
+          <QuickAccessCard
+            to="/stock"
+            title="સ્ટોક વ્યવસ્થાપન"
+            subtitle="ઇન્વેન્ટરી જુઓ"
+            icon={Package}
+            color="from-purple-500 to-purple-600"
+          />
+          <QuickAccessCard
+            to="/bills"
+            title="બિલ બનાવો"
+            subtitle="નવું બિલ"
+            icon={DollarSign}
+            color="from-orange-500 to-orange-600"
+          />
+        </div>
+      </div>
+
+      {/* Alerts Section - Moved down */}
       {(stats.overdueChallans > 0 || lowStockAlerts.length > 0) && (
-        <div className="space-y-3">
-          {stats.overdueChallans > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 border border-red-200 rounded-xl p-4"
-            >
-              <div className="flex items-center gap-3">
-                <Bell className="w-6 h-6 text-red-600" />
-                <div>
-                  <p className="font-semibold text-red-800">
-                    {stats.overdueChallans} ચલણ મુદત વીતી ગઈ છે!
-                  </p>
-                  <p className="text-sm text-red-700">
-                    પ્લેટ્સ પરત કરવાનો સમય થયો છે
-                  </p>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 px-1">
+            ચેતવણીઓ
+          </h2>
+          <div className="space-y-3">
+            {stats.overdueChallans > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 border border-red-200 rounded-xl p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell className="w-6 h-6 text-red-600" />
+                  <div>
+                    <p className="font-semibold text-red-800">
+                      {stats.overdueChallans} ચલણ મુદત વીતી ગઈ છે!
+                    </p>
+                    <p className="text-sm text-red-700">
+                      પ્લેટ્સ પરત કરવાનો સમય થયો છે
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-          
-          {lowStockAlerts.map((alert, index) => (
-            <motion.div
-              key={alert.plate_size}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-yellow-50 border border-yellow-200 rounded-xl p-4"
-            >
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-6 h-6 text-yellow-600" />
-                <div>
-                  <p className="font-semibold text-yellow-800">
-                    {alert.plate_size} પ્લેટ્સ સ્ટોક ઓછો છે!
-                  </p>
-                  <p className="text-sm text-yellow-700">
-                    માત્ર {alert.available_quantity} પ્લેટ્સ બાકી છે
-                  </p>
+              </motion.div>
+            )}
+            
+            {lowStockAlerts.map((alert, index) => (
+              <motion.div
+                key={alert.plate_size}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                  <div>
+                    <p className="font-semibold text-yellow-800">
+                      {alert.plate_size} પ્લેટ્સ સ્ટોક ઓછો છે!
+                    </p>
+                    <p className="text-sm text-yellow-700">
+                      માત્ર {alert.available_quantity} પ્લેટ્સ બાકી છે
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Key Metrics Cards - Horizontal Scroll on Mobile */}
-      <div className="overflow-x-auto pb-2">
-        <div className="flex gap-4 min-w-max md:grid md:grid-cols-3 lg:grid-cols-5 md:min-w-0">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white min-w-[160px] md:min-w-0"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <FileText className="w-8 h-8 text-blue-100" />
-              <span className="text-2xl font-bold">{stats.activeUdharChallans}</span>
-            </div>
-            <p className="text-sm text-blue-100">ઉધાર ચાલતી છે</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-4 text-white min-w-[160px] md:min-w-0"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Clock className="w-8 h-8 text-red-100" />
-              <span className="text-2xl font-bold">{stats.pendingJamaReturns}</span>
-            </div>
-            <p className="text-sm text-red-100">બાકી જમા</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white min-w-[160px] md:min-w-0"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Package className="w-8 h-8 text-purple-100" />
-              <span className="text-2xl font-bold">{stats.onRentPlates}</span>
-            </div>
-            <p className="text-sm text-purple-100">ભાડે પ્લેટ્સ</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white min-w-[160px] md:min-w-0"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Users className="w-8 h-8 text-green-100" />
-              <span className="text-2xl font-bold">{stats.totalClients}</span>
-            </div>
-            <p className="text-sm text-green-100">કુલ ગ્રાહકો</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4 }}
-            className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-4 text-white min-w-[160px] md:min-w-0"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <AlertTriangle className="w-8 h-8 text-yellow-100" />
-              <span className="text-2xl font-bold">{stats.lowStockItems}</span>
-            </div>
-            <p className="text-sm text-yellow-100">કમસ્ટોક પ્લેટ્સ</p>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-blue-600" />
-          ઝડપી ક્રિયાઓ
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Link
-            to="/issue"
-            className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:from-green-600 hover:to-green-700 transition-all duration-200 min-h-[80px]"
-          >
-            <FileText className="w-6 h-6" />
-            <span className="text-sm font-medium text-center">ઉધાર ચલણ બનાવો</span>
-          </Link>
-          
-          <Link
-            to="/return"
-            className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 min-h-[80px]"
-          >
-            <CheckCircle className="w-6 h-6" />
-            <span className="text-sm font-medium text-center">જમા ચલણ બનાવો</span>
-          </Link>
-          
-          <Link
-            to="/clients"
-            className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:from-purple-600 hover:to-purple-700 transition-all duration-200 min-h-[80px]"
-          >
-            <Users className="w-6 h-6" />
-            <span className="text-sm font-medium text-center">નવો ગ્રાહક</span>
-          </Link>
-          
-          <Link
-            to="/stock"
-            className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:from-orange-600 hover:to-orange-700 transition-all duration-200 min-h-[80px]"
-          >
-            <Package className="w-6 h-6" />
-            <span className="text-sm font-medium text-center">સ્ટોક સુધારો</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Recent Activity Feed */}
+      {/* Recent Activity Feed - Moved to bottom */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Activity className="w-5 h-5 text-blue-600" />
@@ -455,5 +486,53 @@ export function MobileDashboard() {
         </Link>
       </div>
     </div>
+  );
+}
+
+// New component for metric cards
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ComponentType<any>;
+  color: string;
+}
+
+function MetricCard({ title, value, icon: Icon, color }: MetricCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`bg-gradient-to-br ${color} rounded-xl p-4 text-white min-w-[140px] shadow-lg`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <Icon className="w-6 h-6 text-white opacity-80" />
+        <span className="text-xl font-bold">{value}</span>
+      </div>
+      <p className="text-sm text-white opacity-90 font-medium">{title}</p>
+    </motion.div>
+  );
+}
+
+// New component for quick access cards
+interface QuickAccessCardProps {
+  to: string;
+  title: string;
+  subtitle: string;
+  icon: React.ComponentType<any>;
+  color: string;
+}
+
+function QuickAccessCard({ to, title, subtitle, icon: Icon, color }: QuickAccessCardProps) {
+  return (
+    <Link
+      to={to}
+      className={`bg-gradient-to-br ${color} text-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:scale-105 transition-all duration-200 min-h-[100px] shadow-lg`}
+    >
+      <Icon className="w-8 h-8" />
+      <div className="text-center">
+        <div className="text-sm font-bold">{title}</div>
+        <div className="text-xs opacity-90">{subtitle}</div>
+      </div>
+    </Link>
   );
 }
