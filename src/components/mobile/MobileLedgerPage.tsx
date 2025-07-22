@@ -50,6 +50,17 @@ interface ClientLedger {
   active_challans: ActiveChallan[];
   completed_challans: CompletedChallan[];
   has_activity: boolean;
+  all_transactions: Array<{
+    type: 'udhar' | 'jama';
+    id: number;
+    number: string;
+    date: string;
+    client_id: string;
+    items: Array<{
+      plate_size: string;
+      quantity: number;
+    }>;
+  }>;
 }
 
 export function MobileLedgerPage() {
@@ -114,15 +125,44 @@ export function MobileLedgerPage() {
 
       if (returnsError) throw returnsError;
 
+      // Create a comprehensive list of all transactions for the table
+      const allTransactions = [
+        // Add all Udhar challans
+        ...challans.map(challan => ({
+          type: 'udhar' as const,
+          id: challan.id,
+          number: challan.challan_number,
+          date: challan.challan_date,
+          client_id: challan.client_id,
+          items: challan.challan_items.map(item => ({
+            plate_size: item.plate_size,
+            quantity: item.borrowed_quantity
+          }))
+        })),
+        // Add all Jama returns
+        ...returns.map(returnRecord => ({
+          type: 'jama' as const,
+          id: returnRecord.id,
+          number: returnRecord.return_challan_number,
+          date: returnRecord.return_date,
+          client_id: returnRecord.client_id,
+          items: returnRecord.return_line_items.map(item => ({
+            plate_size: item.plate_size,
+            quantity: item.returned_quantity
+          }))
+        }))
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
       // Process data for each client
       const ledgers: ClientLedger[] = clients.map(client => {
         const clientChallans = challans.filter(c => c.client_id === client.id);
         const clientReturns = returns.filter(r => r.client_id === client.id);
+        const clientTransactions = allTransactions.filter(t => t.client_id === client.id);
 
-        // Calculate plate balances
+        // Calculate plate balances - Outstanding = Total Issued - Total Returned
         const plateBalanceMap = new Map<string, PlateBalance>();
 
-        // Process borrowed quantities
+        // Process issued quantities from Udhar challans
         clientChallans.forEach(challan => {
           challan.challan_items.forEach(item => {
             const existing = plateBalanceMap.get(item.plate_size) || {
@@ -136,13 +176,17 @@ export function MobileLedgerPage() {
           });
         });
 
-        // Process returned quantities
+        // Process returned quantities from Jama challans
         clientReturns.forEach(returnRecord => {
           returnRecord.return_line_items.forEach(item => {
-            const existing = plateBalanceMap.get(item.plate_size);
-            if (existing) {
-              existing.total_returned += item.returned_quantity;
-            }
+            const existing = plateBalanceMap.get(item.plate_size) || {
+              plate_size: item.plate_size,
+              total_borrowed: 0,
+              total_returned: 0,
+              outstanding: 0
+            };
+            existing.total_returned += item.returned_quantity;
+            plateBalanceMap.set(item.plate_size, existing);
           });
         });
 
@@ -150,38 +194,35 @@ export function MobileLedgerPage() {
         const plate_balances = Array.from(plateBalanceMap.values()).map(balance => ({
           ...balance,
           outstanding: balance.total_borrowed - balance.total_returned
-        })).filter(balance => balance.total_borrowed > 0);
+        })).filter(balance => balance.total_borrowed > 0 || balance.total_returned > 0);
 
         const total_outstanding = plate_balances.reduce((sum, balance) => sum + balance.outstanding, 0);
 
-        // Categorize challans as active or completed
+        // Categorize challans as active or completed (this logic remains for compatibility)
         const active_challans: ActiveChallan[] = [];
         const completed_challans: CompletedChallan[] = [];
 
         clientChallans.forEach(challan => {
-          const itemsWithOutstanding = challan.challan_items.map(item => {
-            const returned = clientReturns.reduce((sum, ret) => {
-              return sum + ret.return_line_items
-                .filter(lineItem => lineItem.plate_size === item.plate_size)
-                .reduce((itemSum, lineItem) => itemSum + lineItem.returned_quantity, 0);
-            }, 0);
-            
-            return {
-              ...item,
-              outstanding: item.borrowed_quantity - Math.min(returned, item.borrowed_quantity)
-            };
+          // Check if this challan has any outstanding plates based on our new calculation
+          const challanHasOutstanding = challan.challan_items.some(item => {
+            const balance = plateBalanceMap.get(item.plate_size);
+            return balance && balance.outstanding > 0;
           });
-
-          const hasOutstanding = itemsWithOutstanding.some(item => item.outstanding > 0);
+          
           const days_on_rent = Math.floor((new Date().getTime() - new Date(challan.challan_date).getTime()) / (1000 * 60 * 60 * 24));
 
-          if (hasOutstanding) {
+          if (challanHasOutstanding) {
+            const itemsWithOutstanding = challan.challan_items.map(item => ({
+              ...item,
+              outstanding: plateBalanceMap.get(item.plate_size)?.outstanding || 0
+            }));
+            
             active_challans.push({
               challan,
               items: itemsWithOutstanding,
               days_on_rent
             });
-          } else if (itemsWithOutstanding.length > 0) {
+          } else if (challan.challan_items.length > 0) {
             completed_challans.push({
               challan,
               items: challan.challan_items,
@@ -204,7 +245,8 @@ export function MobileLedgerPage() {
           total_outstanding,
           active_challans,
           completed_challans,
-          has_activity
+          has_activity,
+          all_transactions: clientTransactions
         };
       });
 
@@ -331,46 +373,24 @@ interface ClientActivityTableProps {
 }
 
 function ClientActivityTable({ ledger }: ClientActivityTableProps) {
-  // Get all unique plate sizes from the client's activity
+  // Get all unique plate sizes from the client's activity (both issued and returned)
   const allPlateSizes = Array.from(new Set([
     ...ledger.plate_balances.map(b => b.plate_size),
-    ...ledger.active_challans.flatMap(c => c.items.map(i => i.plate_size)),
-    ...ledger.completed_challans.flatMap(c => c.items.map(i => i.plate_size))
+    ...ledger.all_transactions.flatMap(t => t.items.map(i => i.plate_size))
   ])).sort();
 
-  // Combine and sort all challans by date (latest first)
-  const allChallans = [
-    ...ledger.active_challans.map(ac => ({
-      type: 'udhar' as const,
-      id: ac.challan.id,
-      number: ac.challan.challan_number,
-      date: ac.challan.challan_date,
-      items: ac.items.map(item => ({
-        plate_size: item.plate_size,
-        quantity: item.borrowed_quantity
-      }))
-    })),
-    ...ledger.completed_challans.map(cc => ({
-      type: 'udhar' as const,
-      id: cc.challan.id,
-      number: cc.challan.challan_number,
-      date: cc.challan.challan_date,
-      items: cc.items.map(item => ({
-        plate_size: item.plate_size,
-        quantity: item.borrowed_quantity
-      }))
-    }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Use the comprehensive transaction list that includes both Udhar and Jama
+  const allTransactions = ledger.all_transactions;
 
-  // Get current balance for each plate size
+  // Get current outstanding balance for each plate size (Issued - Returned)
   const getCurrentBalance = (plateSize: string) => {
     const balance = ledger.plate_balances.find(b => b.plate_size === plateSize);
     return balance?.outstanding || 0;
   };
 
-  // Get quantity for a specific challan and plate size
-  const getChallanQuantity = (challan: typeof allChallans[0], plateSize: string) => {
-    const item = challan.items.find(i => i.plate_size === plateSize);
+  // Get quantity for a specific transaction and plate size
+  const getTransactionQuantity = (transaction: typeof allTransactions[0], plateSize: string) => {
+    const item = transaction.items.find(i => i.plate_size === plateSize);
     return item?.quantity || 0;
   };
 
@@ -422,7 +442,7 @@ function ClientActivityTable({ ledger }: ClientActivityTableProps) {
             </tr>
 
             {/* Challan Rows */}
-            {allChallans.length === 0 ? (
+            {allTransactions.length === 0 ? (
               <tr>
                 <td colSpan={allPlateSizes.length + 1} className="px-3 py-6 text-center text-gray-500">
                   કોઈ ચલણ પ્રવૃત્તિ નથી
@@ -431,41 +451,41 @@ function ClientActivityTable({ ledger }: ClientActivityTableProps) {
                 </td>
               </tr>
             ) : (
-              allChallans.map((challan, index) => (
+              allTransactions.map((transaction, index) => (
                 <tr 
-                  key={`${challan.type}-${challan.id}`}
+                  key={`${transaction.type}-${transaction.id}`}
                   className={`border-b border-gray-100 hover:bg-gray-50 ${
-                    challan.type === 'udhar' ? 'bg-yellow-50' : 'bg-green-50'
+                    transaction.type === 'udhar' ? 'bg-yellow-50' : 'bg-green-50'
                   }`}
                 >
                   <td className={`sticky left-0 px-3 py-3 border-r border-gray-200 ${
-                    challan.type === 'udhar' ? 'bg-yellow-50' : 'bg-green-50'
+                    transaction.type === 'udhar' ? 'bg-yellow-50' : 'bg-green-50'
                   }`}>
                     <div className="space-y-1">
                       <div className="font-medium text-gray-900">
-                        #{challan.number}
+                        #{transaction.number}
                       </div>
                       <div className={`text-xs px-2 py-1 rounded-full font-medium inline-block ${
-                        challan.type === 'udhar' 
+                        transaction.type === 'udhar' 
                           ? 'bg-yellow-200 text-yellow-800' 
                           : 'bg-green-200 text-green-800'
                       }`}>
-                        {challan.type === 'udhar' ? 'ઉધાર' : 'જમા'}
+                        {transaction.type === 'udhar' ? 'ઉધાર' : 'જમા'}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {new Date(challan.date).toLocaleDateString('en-GB')}
+                        {new Date(transaction.date).toLocaleDateString('en-GB')}
                       </div>
                     </div>
                   </td>
                   {allPlateSizes.map(size => {
-                    const quantity = getChallanQuantity(challan, size);
+                    const quantity = getTransactionQuantity(transaction, size);
                     return (
                       <td key={size} className="px-2 py-3 text-center border-r border-gray-200">
                         {quantity > 0 && (
                           <span className={`font-medium ${
-                            challan.type === 'udhar' ? 'text-yellow-700' : 'text-green-700'
+                            transaction.type === 'udhar' ? 'text-yellow-700' : 'text-green-700'
                           }`}>
-                            {challan.type === 'udhar' ? '+' : '-'}{quantity}
+                            {transaction.type === 'udhar' ? '+' : '-'}{quantity}
                           </span>
                         )}
                       </td>
