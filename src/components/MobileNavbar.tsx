@@ -17,6 +17,14 @@ const NAVIGATION_ITEMS = [
   { key: 'ledger', label: 'ખાતાવહી', icon: BarChart3, path: '/ledger' }
 ]
 
+// Bottom navigation items - only 4 items as requested
+const BOTTOM_NAV_ITEMS = [
+  { key: 'dashboard', label: 'હોમ', icon: Home, path: '/' },
+  { key: 'issue', label: 'ઉધાર', icon: FileText, path: '/issue' },
+  { key: 'return', label: 'જમા', icon: RotateCcw, path: '/return' },
+  { key: 'ledger', label: 'ખાતાવહી', icon: BarChart3, path: '/ledger' }
+]
+
 export function MobileNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showUserEmail, setShowUserEmail] = useState(false)
@@ -193,7 +201,7 @@ export function MobileNavbar() {
       {/* BOTTOM TAB BAR (Quick Access) */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg font-noto-gujarati">
         <div className="grid grid-cols-4 h-16">
-          {NAVIGATION_ITEMS.slice(0, 4).map((item) => (
+          {BOTTOM_NAV_ITEMS.map((item) => (
             <Link
               key={item.key}
               to={item.path}
