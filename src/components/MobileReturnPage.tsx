@@ -39,7 +39,7 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
           challans (
             id,
             challan_number,
-            challan_date,
+            issue_date,
             clients (
               id,
               name
@@ -62,7 +62,7 @@ export default function MobileReturnPage({ onBack }: MobileReturnPageProps) {
           quantity: item.quantity || 0,
           returned_quantity: item.returned_quantity || 0,
           outstanding_quantity: outstandingQty,
-          issue_date: item.challans?.challan_date || '',
+          issue_date: item.challans?.issue_date || '',
           client_name: item.challans?.clients?.name || 'Unknown Client',
           client_id: item.challans?.clients?.id || '',
           challan_number: item.challans?.challan_number || ''
