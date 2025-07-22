@@ -239,7 +239,7 @@ export function MobileDashboard() {
       {/* Time and Date Header */}
       <div className="text-center pt-4">
         <h1 className="text-lg font-bold text-gray-900 mb-2">
-          સેન્ટરિંગ પ્લેટ્સ ભાડા સિસ્ટમ
+          નીલકંઠ પ્લેટ ડેપો
         </h1>
         <p className="text-base text-gray-700 font-medium mb-4">
           {getGujaratiDate()}
@@ -252,17 +252,54 @@ export function MobileDashboard() {
           <div className="flex items-center gap-3">
             {getWeatherIcon()}
             <div>
-              <div className="text-2xl font-bold">{weather.temperature}°C</div>
-              <div className="text-sm opacity-90 capitalize">Partly Cloudy</div>
+              <div className="text-2xl font-bold">31°C</div>
+              <div className="text-sm opacity-90">Mostly cloudy</div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-semibold">અમદાવાદ</div>
+            <div className="text-lg font-semibold">સુરત</div>
             <div className="text-sm opacity-90 flex items-center gap-1">
               <Droplets className="w-3 h-3" />
               {weather.humidity}% ભેજ
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Quick Access */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 px-1">
+          ઝડપી પ્રવેશ
+        </h2>
+        <div className="grid grid-cols-2 gap-4">
+          <QuickAccessCard
+            to="/issue"
+            title="ઉધાર ચલણ બનાવો"
+            subtitle="નવું ઉધાર"
+            icon={FileText}
+            color="from-green-500 to-green-600"
+          />
+          <QuickAccessCard
+            to="/return"
+            title="જમા ચલણ બનાવો"
+            subtitle="પ્લેટ્સ પરત"
+            icon={RotateCcw}
+            color="from-blue-500 to-blue-600"
+          />
+          <QuickAccessCard
+            to="/stock"
+            title="સ્ટોક વ્યવસ્થાપન"
+            subtitle="ઇન્વેન્ટરી જુઓ"
+            icon={Package}
+            color="from-purple-500 to-purple-600"
+          />
+          <QuickAccessCard
+            to="/bills"
+            title="બિલ બનાવો"
+            subtitle="નવું બિલ"
+            icon={DollarSign}
+            color="from-orange-500 to-orange-600"
+          />
         </div>
       </div>
 
@@ -316,43 +353,6 @@ export function MobileDashboard() {
               color="from-indigo-500 to-indigo-600"
             />
           </div>
-        </div>
-      </div>
-
-      {/* Quick Access */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 px-1">
-          ઝડપી પ્રવેશ
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          <QuickAccessCard
-            to="/issue"
-            title="ઉધાર ચલણ બનાવો"
-            subtitle="નવું ઉધાર"
-            icon={FileText}
-            color="from-green-500 to-green-600"
-          />
-          <QuickAccessCard
-            to="/return"
-            title="જમા ચલણ બનાવો"
-            subtitle="પ્લેટ્સ પરત"
-            icon={RotateCcw}
-            color="from-blue-500 to-blue-600"
-          />
-          <QuickAccessCard
-            to="/stock"
-            title="સ્ટોક વ્યવસ્થાપન"
-            subtitle="ઇન્વેન્ટરી જુઓ"
-            icon={Package}
-            color="from-purple-500 to-purple-600"
-          />
-          <QuickAccessCard
-            to="/bills"
-            title="બિલ બનાવો"
-            subtitle="નવું બિલ"
-            icon={DollarSign}
-            color="from-orange-500 to-orange-600"
-          />
         </div>
       </div>
 

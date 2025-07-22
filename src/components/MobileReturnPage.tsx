@@ -28,8 +28,6 @@ export function MobileReturnPage() {
   const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('');
   const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [plateNotes, setPlateNotes] = useState<Record<string, string>>({});
-  const [overallNote, setOverallNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [challanData, setChallanData] = useState<ChallanData | null>(null);
   const [clientOutstandingPlates, setClientOutstandingPlates] = useState<Record<string, number>>({});
@@ -201,8 +199,8 @@ export function MobileReturnPage() {
         .map(size => ({
           plate_size: size,
           returned_quantity: quantities[size],
-          damage_notes: plateNotes[size]?.trim() || null,
-          partner_stock_notes: plateNotes[size]?.trim() || null
+          damage_notes: null,
+          partner_stock_notes: null
         }));
 
       const { data: returnRecord, error: returnError } = await supabase
@@ -243,7 +241,7 @@ export function MobileReturnPage() {
         plates: returnEntries.map(entry => ({
           size: entry.plate_size,
           quantity: entry.returned_quantity,
-          notes: plateNotes[entry.plate_size] || '',
+          notes: '',
         })),
         total_quantity: returnEntries.reduce((sum, entry) => sum + entry.returned_quantity, 0)
       };
@@ -268,7 +266,6 @@ export function MobileReturnPage() {
       }
 
       setQuantities({});
-      setPlateNotes({});
       setReturnChallanNumber('');
       setSelectedClient(null);
       setChallanData(null);
@@ -356,8 +353,6 @@ export function MobileReturnPage() {
           <ReturnClientSelector 
             onClientSelect={(client) => {
               setSelectedClient(client);
-              setQuantities({});
-              setPlateNotes({});
             }}
           />
         )}
@@ -550,23 +545,6 @@ function ReturnClientSelector({ onClientSelect }: ReturnClientSelectorProps) {
           <div className="text-center py-8 text-gray-500">
             {searchTerm ? 'No clients found' : 'No clients available'}
           </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredClients.map((client) => (
-              <button
-                key={client.id}
-                onClick={() => onClientSelect(client)}
-                className="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-base">{client.name}</p>
-                    <p className="text-sm text-gray-600 mt-1">ID: {client.id}</p>
-                  </div>
-                  <div className="text-right ml-4">
-                    <p className="text-sm text-gray-600">{client.site}</p>
-                    <p className="text-xs text-gray-500 mt-1">{client.mobile_number}</p>
-                  </div>
                 </div>
               </button>
             ))}
