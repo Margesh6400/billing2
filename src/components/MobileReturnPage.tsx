@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../lib/supabase';
-import { RotateCcw, Package, Save, Loader2, Calendar, User, Search, Hash, MapPin } from 'lucide-react';
+import { ClientSelector } from './ClientSelector';
+import { RotateCcw, Package, Save, Loader2, Calendar, Eye, EyeOff, User, Hash, MapPin, Search } from 'lucide-react';
 import { PrintableChallan } from './challans/PrintableChallan';
 import { generateAndDownloadPDF } from '../utils/pdfGenerator';
 import { ChallanData } from './challans/types';
@@ -28,6 +29,7 @@ export function MobileReturnPage() {
   const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [plateNotes, setPlateNotes] = useState<Record<string, string>>({});
+  const [overallNote, setOverallNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [challanData, setChallanData] = useState<ChallanData | null>(null);
   const [clientOutstandingPlates, setClientOutstandingPlates] = useState<Record<string, number>>({});
