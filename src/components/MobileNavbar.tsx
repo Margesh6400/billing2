@@ -12,7 +12,7 @@ const NAVIGATION_ITEMS = [
   { key: 'return', label: 'જમા', icon: RotateCcw, path: '/return' },
   { key: 'clients', label: 'ગ્રાહકો', icon: Users, path: '/clients' },
   { key: 'stock', label: 'સ્ટોક', icon: Package, path: '/stock' },
-  { key: 'challans', label: 'ચલણ વ્યવસ્થાપન', icon: Receipt, path: '/challans' },
+  { key: 'challans', label: 'ચલણ બૂક', icon: Receipt, path: '/challans' },
   { key: 'bills', label: 'બિલ', icon: DollarSign, path: '/bills' },
   { key: 'ledger', label: 'ખાતાવહી', icon: BarChart3, path: '/ledger' }
 ]

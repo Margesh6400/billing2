@@ -1,573 +1,339 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Database } from '../lib/supabase';
-import { ClientSelector } from './ClientSelector';
-import { RotateCcw, Package, Save, Loader2, Calendar, Eye, EyeOff, User, Hash, MapPin, Search } from 'lucide-react';
-import { PrintableChallan } from './challans/PrintableChallan';
-import { generateJPGChallan, downloadJPGChallan } from '../utils/jpgChallanGenerator';
-import { ChallanData } from './challans/types';
-import { T } from '../contexts/LanguageContext';
+import React, { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
+import { Database } from "../lib/supabase";
+import { RotateCcw, Package, Save, Loader2, Calendar, User, Hash, MapPin, Search } from "lucide-react";
+import { generateJPGChallan, downloadJPGChallan } from "../utils/jpgChallanGenerator";
+import { ChallanData } from "./challans/types";
+import { T } from "../contexts/LanguageContext";
 
-type Client = Database['public']['Tables']['clients']['Row'];
-
+type Client = Database["public"]["Tables"]["clients"]["Row"];
 const PLATE_SIZES = [
-  '2 X 3',
-  '21 X 3',
-  '18 X 3', 
-  '15 X 3',
-  '12 X 3',
-  '9 X 3',
-  'પતરા',
-  '2 X 2',
-  '2 ફુટ'
+  "2 X 3", "21 X 3", "18 X 3", "15 X 3", "12 X 3",
+  "9 X 3", "પતરા", "2 X 2", "2 ફુટ",
 ];
 
 export function MobileReturnPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [returnChallanNumber, setReturnChallanNumber] = useState('');
-  const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('');
-  const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
+  const [returnChallanNumber, setReturnChallanNumber] = useState("");
+  const [suggestedChallanNumber, setSuggestedChallanNumber] = useState("");
+  const [returnDate, setReturnDate] = useState(new Date().toISOString().split("T")[0]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [plateNotes, setPlateNotes] = useState<Record<string, string>>({});
-  const [overallNote, setOverallNote] = useState('');
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [challanData, setChallanData] = useState<ChallanData | null>(null);
   const [clientOutstandingPlates, setClientOutstandingPlates] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    generateNextChallanNumber();
-  }, []);
+  useEffect(() => { generateNextChallanNumber(); }, []);
+  useEffect(() => { if (selectedClient) fetchOutstanding(); }, [selectedClient]);
 
-  useEffect(() => {
-    if (selectedClient) {
-      fetchClientOutstandingPlates();
-    }
-  }, [selectedClient]);
-
-  const fetchClientOutstandingPlates = async () => {
-    if (!selectedClient) return;
-
+  async function fetchOutstanding() {
     try {
-      // Fetch all challans for this client
-      const { data: challans, error: challansError } = await supabase
-        .from('challans')
-        .select(`
-          challan_items (
-            plate_size,
-            borrowed_quantity
-          )
-        `)
-        .eq('client_id', selectedClient.id);
-
-      if (challansError) throw challansError;
-
-      // Fetch all returns for this client
-      const { data: returns, error: returnsError } = await supabase
-        .from('returns')
-        .select(`
-          return_line_items (
-            plate_size,
-            returned_quantity
-          )
-        `)
-        .eq('client_id', selectedClient.id);
-
-      if (returnsError) throw returnsError;
-
-      // Calculate outstanding plates per size
-      const outstanding: Record<string, number> = {};
-
-      // Add borrowed quantities
-      challans?.forEach(challan => {
-        challan.challan_items.forEach(item => {
-          outstanding[item.plate_size] = (outstanding[item.plate_size] || 0) + item.borrowed_quantity;
-        });
-      });
-
-      // Subtract returned quantities
-      returns?.forEach(returnRecord => {
-        returnRecord.return_line_items.forEach(item => {
-          outstanding[item.plate_size] = (outstanding[item.plate_size] || 0) - item.returned_quantity;
-        });
-      });
-
-      // Filter out zero or negative values
-      const filteredOutstanding: Record<string, number> = {};
-      Object.entries(outstanding).forEach(([size, qty]) => {
-        if (qty > 0) {
-          filteredOutstanding[size] = qty;
-        }
-      });
-
-      setClientOutstandingPlates(filteredOutstanding);
-    } catch (error) {
-      console.error('Error fetching client outstanding plates:', error);
+      const { data: challans } = await supabase
+        .from("challans")
+        .select("challan_items (plate_size, borrowed_quantity)")
+        .eq("client_id", selectedClient!.id);
+      const { data: returns } = await supabase
+        .from("returns")
+        .select("return_line_items (plate_size, returned_quantity)")
+        .eq("client_id", selectedClient!.id);
+      const out: Record<string, number> = {};
+      challans?.forEach((ch) => ch.challan_items.forEach(item => {
+        out[item.plate_size] = (out[item.plate_size] || 0) + item.borrowed_quantity;
+      }));
+      returns?.forEach((ret) => ret.return_line_items.forEach(item => {
+        out[item.plate_size] = (out[item.plate_size] || 0) - item.returned_quantity;
+      }));
+      // Only keep >0 values
+      const filtered: Record<string, number> = {};
+      Object.entries(out).forEach(([k, v]) => { if (v > 0) filtered[k] = v; });
+      setClientOutstandingPlates(filtered);
+    } catch (e) {
+      setClientOutstandingPlates({});
     }
-  };
+  }
 
-  const generateNextChallanNumber = async () => {
+  async function generateNextChallanNumber() {
     try {
-      // Fetch all existing return challans to find the highest numeric value
-      const { data, error } = await supabase
-        .from('returns')
-        .select('return_challan_number')
-        .order('id', { ascending: false });
-
-      if (error) throw error;
-
-      let maxNumber = 0;
-      if (data && data.length > 0) {
-        // Extract all numeric values and find the absolute maximum
-        data.forEach(returnChallan => {
-          const match = returnChallan.return_challan_number.match(/\d+/);
-          if (match) {
-            const num = parseInt(match[0]);
-            if (num > maxNumber) {
-              maxNumber = num;
-            }
-          }
-        });
-      }
-
-      // Always increment by 1 from the highest found number
-      const nextNumber = (maxNumber + 1).toString();
-      setSuggestedChallanNumber(nextNumber);
-      
-      // Set as default only if current challan number is empty
-      if (!returnChallanNumber) {
-        setReturnChallanNumber(nextNumber);
-      }
-    } catch (error) {
-      console.error('Error generating return challan number:', error);
-      // Fallback to timestamp-based number
-      const fallback = '1';
-      setSuggestedChallanNumber(fallback);
-      if (!returnChallanNumber) {
-        setReturnChallanNumber(fallback);
-      }
+      const { data } = await supabase
+        .from("returns")
+        .select("return_challan_number")
+        .order("id", { ascending: false });
+      let max = 0;
+      data?.forEach(d => {
+        const m = d.return_challan_number.match(/\d+/);
+        if (m) max = Math.max(max, parseInt(m[0]));
+      });
+      const next = (max + 1).toString();
+      setSuggestedChallanNumber(next);
+      if (!returnChallanNumber) setReturnChallanNumber(next);
+    } catch {
+      setSuggestedChallanNumber("1");
+      if (!returnChallanNumber) setReturnChallanNumber("1");
     }
-  };
+  }
 
-  const handleChallanNumberChange = (value: string) => {
-    setReturnChallanNumber(value);
-    
-    // If user clears the input, suggest the next available number
-    if (!value.trim()) {
-      setReturnChallanNumber(suggestedChallanNumber);
-    }
-  };
+  function handleChallanNumberChange(val: string) {
+    setReturnChallanNumber(val);
+    if (!val.trim()) setReturnChallanNumber(suggestedChallanNumber);
+  }
+  function handleQuantityChange(size: string, val: string) {
+    const q = parseInt(val) || 0;
+    setQuantities((prev) => ({ ...prev, [size]: q }));
+  }
+  function handleNoteChange(size: string, val: string) {
+    setNotes(prev => ({ ...prev, [size]: val }));
+  }
 
-  const handleQuantityChange = (size: string, value: string) => {
-    const quantity = parseInt(value) || 0;
-    setQuantities(prev => ({
-      ...prev,
-      [size]: quantity
-    }));
-  };
-
-  const checkReturnChallanNumberExists = async (challanNumber: string) => {
-    const { data, error } = await supabase
-      .from('returns')
-      .select('return_challan_number')
-      .eq('return_challan_number', challanNumber)
+  async function checkReturnChallanNumberExists(num: string) {
+    const { data } = await supabase
+      .from("returns")
+      .select("return_challan_number")
+      .eq("return_challan_number", num)
       .limit(1);
-
     return data && data.length > 0;
-  };
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-
     try {
-      if (!selectedClient) {
-        alert('Please select a client.');
-        return;
+      if (!selectedClient) { alert("Select a client!"); return; }
+      if (!returnChallanNumber.trim()) { alert("Enter return challan number."); return; }
+      if (await checkReturnChallanNumberExists(returnChallanNumber)) {
+        alert("Return challan number already exists!"); return;
       }
-
-      if (!returnChallanNumber.trim()) {
-        alert('Please enter a return challan number.');
-        return;
-      }
-
-      const exists = await checkReturnChallanNumberExists(returnChallanNumber);
-      if (exists) {
-        alert('Return challan number already exists. Please use a different number.');
-        return;
-      }
-
-      const returnEntries = PLATE_SIZES
-        .filter(size => quantities[size] > 0)
-        .map(size => ({
+      const returnEntries = Object.entries(clientOutstandingPlates)
+        .filter(([size]) => (quantities[size] || 0) > 0)
+        .map(([size, outstanding]) => ({
           plate_size: size,
-          returned_quantity: quantities[size],
-          damage_notes: plateNotes[size]?.trim() || null,
-          partner_stock_notes: plateNotes[size]?.trim() || null
+          returned_quantity: quantities[size] || 0,
+          damage_notes: notes[size] || null,
         }));
-
-      const { data: returnRecord, error: returnError } = await supabase
-        .from('returns')
+      const { data: returnRecord, error } = await supabase
+        .from("returns")
         .insert([{
           return_challan_number: returnChallanNumber,
           client_id: selectedClient.id,
-          return_date: returnDate
+          return_date: returnDate,
         }])
         .select()
         .single();
-
-      if (returnError) throw returnError;
-
+      if (error) throw error;
       if (returnEntries.length > 0) {
         const lineItems = returnEntries.map(entry => ({
           return_id: returnRecord.id,
           ...entry
         }));
-
-        const { error: lineItemsError } = await supabase
-          .from('return_line_items')
-          .insert(lineItems);
-
+        const { error: lineItemsError } = await supabase.from("return_line_items").insert(lineItems);
         if (lineItemsError) throw lineItemsError;
       }
-
       const newChallanData: ChallanData = {
-        type: 'return',
+        type: "return",
         challan_number: returnRecord.return_challan_number,
         date: returnDate,
         client: {
           id: selectedClient.id,
           name: selectedClient.name,
-          site: selectedClient.site || '',
-          mobile: selectedClient.mobile_number || ''
+          site: selectedClient.site || "",
+          mobile: selectedClient.mobile_number || "",
         },
-        plates: returnEntries.map(entry => ({
-          size: entry.plate_size,
-          quantity: entry.returned_quantity,
-          notes: plateNotes[entry.plate_size] || '',
+        plates: returnEntries.map(e => ({
+          size: e.plate_size,
+          quantity: e.returned_quantity,
+          notes: notes[e.plate_size] || "",
         })),
-        total_quantity: returnEntries.reduce((sum, entry) => sum + entry.returned_quantity, 0)
+        total_quantity: returnEntries.reduce((sum, e) => sum + e.returned_quantity, 0),
       };
-
       setChallanData(newChallanData);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      try {
-        const jpgDataUrl = await generateJPGChallan(newChallanData);
-        downloadJPGChallan(jpgDataUrl, `return-challan-${returnRecord.return_challan_number}`);
-
-      } catch (error) {
-        console.error('JPG generation failed:', error);
-        alert('Error generating challan image. Please try again.');
-        return;
-      }
-
+      await new Promise(res => setTimeout(res, 500));
+      const jpgDataUrl = await generateJPGChallan(newChallanData);
+      downloadJPGChallan(jpgDataUrl, `return-challan-${returnRecord.return_challan_number}`);
       setQuantities({});
-      setPlateNotes({});
-      setReturnChallanNumber('');
+      setNotes({});
+      setReturnChallanNumber("");
       setSelectedClient(null);
       setChallanData(null);
       setClientOutstandingPlates({});
-      
-      const message = returnEntries.length > 0 
-        ? `Return challan ${returnRecord.return_challan_number} created and downloaded successfully with ${returnEntries.length} items!`
-        : `Return challan ${returnRecord.return_challan_number} created and downloaded successfully (no items returned).`;
-      
-      alert(message);
+      alert("Return challan created and downloaded!");
     } catch (error) {
-      console.error('Error creating return:', error);
-      alert('Error creating return. Please try again.');
+      alert("Error creating return. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  return (
-    <div className="space-y-4 pb-4">
-      {/* Hidden Printable Challan */}
-      <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
-        {challanData && (
-          <div id={`challan-${challanData.challan_number}`}>
-            <PrintableChallan data={challanData} />
-          </div>
-        )}
+  // Returns only clients with outstanding plates
+  function ReturnClientSelector({ onClientSelect }: { onClientSelect: (client: Client) => void; }) {
+    const [clients, setClients] = useState<Client[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      supabase.from("clients").select("*").order("id").then(({ data }) => {
+        setClients(data || []); setLoading(false);
+      });
+    }, []);
+    return (
+      <div>
+        <div className="mb-2 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-base"
+            placeholder="Search existing clients..."
+          />
+        </div>
+        <div className="max-h-60 overflow-y-auto">
+          {loading ? (
+            <div className="text-center py-6 text-gray-500">Loading clients...</div>
+          ) : (
+            clients.filter(client =>
+              client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              client.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              (client.site || "").toLowerCase().includes(searchTerm.toLowerCase())
+            ).map(client => (
+              <button
+                key={client.id}
+                onClick={() => onClientSelect(client)}
+                className="w-full text-left py-3 px-4 border-b text-base hover:bg-blue-50"
+              >
+                <span className="font-semibold">{client.name}</span>
+                <span className="ml-2 text-gray-600 text-sm">ID: {client.id} | {client.site}</span>
+                <span className="block text-xs text-blue-700">{client.mobile_number}</span>
+              </button>
+            ))
+          )}
+        </div>
       </div>
+    );
+  }
 
-      {/* Header */}
+  // --- UI STARTS HERE ---
+  return (
+    <div className="space-y-4 pb-20">
       <div className="text-center pt-2">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">
-          <T>Return Challan</T>
-        </h1>
+        <h1 className="text-xl font-bold text-gray-900 mb-1"><T>Return Challan</T></h1>
         <p className="text-sm text-gray-600">જમા ચલણ - Process plate returns</p>
       </div>
-
-      {/* Client Selection */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <User className="w-5 h-5 text-blue-600" />
-            Select Client (Existing Only)
-          </h2>
-        </div>
-        
-        {selectedClient ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Hash className="w-5 h-5 text-gray-500" />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Client ID</label>
-                  <p className="text-gray-900 font-semibold">{selectedClient.id}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <User className="w-5 h-5 text-gray-500" />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <p className="text-gray-900 font-semibold">{selectedClient.name}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <MapPin className="w-5 h-5 text-gray-500" />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Site</label>
-                  <p className="text-gray-900 font-semibold">{selectedClient.site}</p>
-                </div>
-              </div>
+        {!selectedClient ? (
+          <ReturnClientSelector onClientSelect={(client) => {
+            setSelectedClient(client); setQuantities({}); setNotes({});
+          }} />
+        ) : (
+          <div>
+            <div className="mb-2 flex gap-4 flex-wrap items-center border-b pb-2">
+              <span className="font-semibold text-gray-900"><User className="inline w-5 h-5" /> {selectedClient.name}</span>
+              <span className="text-gray-700 flex items-center text-sm"><Hash className="inline w-4 h-4 mr-1" /> {selectedClient.id}</span>
+              <span className="text-gray-700 flex items-center text-sm"><MapPin className="inline w-4 h-4 mr-1" /> {selectedClient.site}</span>
             </div>
             <button
               onClick={() => {
                 setSelectedClient(null);
                 setQuantities({});
-                setPlateNotes({});
+                setNotes({});
                 setClientOutstandingPlates({});
               }}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+              className="text-blue-500 hover:underline text-sm mb-4"
             >
-              Change Client
+              ચયન બદલવો (Change)
             </button>
           </div>
-        ) : (
-          <ReturnClientSelector 
-            onClientSelect={(client) => {
-              setSelectedClient(client);
-              setQuantities({});
-              setPlateNotes({});
-            }}
-          />
         )}
       </div>
-
-      {/* Return Form */}
+      {/* Table for shapes/notes, only for outstanding sizes */}
       {selectedClient && Object.keys(clientOutstandingPlates).length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <RotateCcw className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              <T>Return Plates</T>
-            </h2>
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 px-2 pt-1 pb-4 space-y-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-3 flex-wrap items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Return Challan No. *</label>
+              <input
+                type="text"
+                value={returnChallanNumber}
+                onChange={e => handleChallanNumberChange(e.target.value)}
+                onFocus={e => e.target.select()}
+                className="ml-2 w-28 px-2 py-1 border border-gray-300 rounded-lg text-base"
+                placeholder={`Suggested: ${suggestedChallanNumber}`}
+                required
+              />
+              <label className="block text-sm font-medium text-gray-700 ml-auto">
+                <Calendar className="w-4 h-4 inline" /> Date
+              </label>
+              <input
+                type="date"
+                value={returnDate}
+                onChange={e => setReturnDate(e.target.value)}
+                required
+                className="ml-2 w-32 px-2 py-1 border border-gray-300 rounded-lg text-base"
+              />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full rounded-lg border">
+                <thead>
+                  <tr className="bg-blue-50">
+                    <th className="px-2 py-2 text-left text-xs font-semibold">Plate Size</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold">Outstanding</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold">Returned</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold">Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(clientOutstandingPlates).map(([size, outstanding]) => (
+                    <tr key={size} className="border-t">
+                      <td className="px-2 py-2 font-medium whitespace-nowrap">{size}</td>
+                      <td className="px-2 py-2 text-center text-red-700">{outstanding}</td>
+                      <td className="px-2 py-2 text-center">
+                        <input
+                          type="number"
+                          min={0} max={outstanding}
+                          value={quantities[size] || ""}
+                          onChange={e => handleQuantityChange(size, e.target.value)}
+                          className="w-14 px-1 py-1 border border-gray-300 rounded text-base text-center"
+                          placeholder="0"
+                        />
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <textarea
+                          rows={1}
+                          className="w-28 border border-gray-300 rounded text-sm px-1 py-0.5"
+                          value={notes[size] || ""}
+                          onChange={e => handleNoteChange(size, e.target.value)}
+                          placeholder="Note"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>          
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Return Details */}
-            <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Return Challan Number *
-                </label>
-                <input
-                  type="text"
-                  value={returnChallanNumber}
-                  onChange={(e) => handleChallanNumberChange(e.target.value)}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                  placeholder={`Suggested: ${suggestedChallanNumber}`}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <T>Return Date</T> *
-                </label>
-                <input
-                  type="date"
-                  value={returnDate}
-                  onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Outstanding Plates List */}
-            <div className="space-y-3">
-              {Object.entries(clientOutstandingPlates).map(([size, outstandingQty]) => (
-                <div key={size} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium text-gray-900">{size}</span>
-                    </div>
-                    <span className="text-xs text-red-600 font-medium">
-                      Outstanding: {outstandingQty}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        <T>Quantity Returned</T>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={outstandingQty}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                        value={quantities[size] || ''}
-                        onChange={(e) => handleQuantityChange(size, e.target.value)}
-                        placeholder="0"
-                      />
-                    </div>
-                    
-                    {/* Individual Note Field */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        નોંધ (Note)
-                      </label>
-                      <textarea
-                        value={plateNotes[size] || ''}
-                        onChange={(e) => setPlateNotes(prev => ({
-                          ...prev,
-                          [size]: e.target.value
-                        }))}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm resize-none"
-                        rows={2}
-                        placeholder="Enter notes for damage, loss, etc..."
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Subtotal */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="text-center">
-                <span className="text-lg font-semibold text-blue-900">
-                  કુલ પ્લેટ : {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
-                </span>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-base"
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Save className="w-5 h-5" />
-              )}
-              {loading ? 'Processing...' : <T>Submit Return</T>}
-            </button>
-          </form>
-        </div>
+          {/* Subtotal */}
+          <div className="mt-4 text-center bg-blue-50 py-2 rounded-lg font-semibold text-base text-blue-700">
+            કુલ પ્લેટ : {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-base"
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Save className="w-5 h-5" />
+            )}
+            {loading ? "Processing..." : <T>Submit Return</T>}
+          </button>
+        </form>
       )}
-
+      {/* No outstanding message */}
       {selectedClient && Object.keys(clientOutstandingPlates).length === 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+        <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
           <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p className="text-gray-500">This client has no outstanding plates to return.</p>
         </div>
       )}
-    </div>
-  );
-}
-
-// New component for return client selection (without add client option)
-interface ReturnClientSelectorProps {
-  onClientSelect: (client: Client) => void;
-}
-
-function ReturnClientSelector({ onClientSelect }: ReturnClientSelectorProps) {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchClients();
-  }, []);
-
-  const fetchClients = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('id');
-
-      if (error) throw error;
-      setClients(data || []);
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.site.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
-    <div>
-      <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-            placeholder="Search existing clients..."
-          />
-        </div>
-      </div>
-
-      <div className="max-h-60 overflow-y-auto">
-        {loading ? (
-          <div className="text-center py-8 text-gray-500">Loading clients...</div>
-        ) : filteredClients.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            {searchTerm ? 'No clients found' : 'No clients available'}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredClients.map((client) => (
-              <button
-                key={client.id}
-                onClick={() => onClientSelect(client)}
-                className="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-base">{client.name}</p>
-                    <p className="text-sm text-gray-600 mt-1">ID: {client.id}</p>
-                  </div>
-                  <div className="text-right ml-4">
-                    <p className="text-sm text-gray-600">{client.site}</p>
-                    <p className="text-xs text-gray-500 mt-1">{client.mobile_number}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

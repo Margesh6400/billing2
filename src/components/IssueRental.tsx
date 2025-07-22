@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Database } from '../lib/supabase'
 import { ClientSelector } from './ClientSelector'
-import { FileText, Package, Save, Loader2, Calendar, Eye, EyeOff, AlertTriangle } from 'lucide-react'
+import { FileText, Package, Save, Loader2, Calendar, AlertTriangle } from 'lucide-react'
 import { PrintableChallan } from './challans/PrintableChallan'
 import { generateJPGChallan, downloadJPGChallan } from '../utils/jpgChallanGenerator'
 import { ChallanData } from './challans/types'
@@ -11,15 +11,8 @@ type Client = Database['public']['Tables']['clients']['Row']
 type Stock = Database['public']['Tables']['stock']['Row']
 
 const PLATE_SIZES = [
-  '2 X 3',
-  '21 X 3',
-  '18 X 3',
-  '15 X 3',
-  '12 X 3',
-  '9 X 3',
-  'પતરા',
-  '2 X 2',
-  '2 ફુટ'
+  '2 X 3', '21 X 3', '18 X 3', '15 X 3', '12 X 3',
+  '9 X 3', 'પતરા', '2 X 2', '2 ફુટ'
 ]
 
 interface StockValidation {
@@ -34,11 +27,14 @@ export function IssueRental() {
   const [suggestedChallanNumber, setSuggestedChallanNumber] = useState('')
   const [challanDate, setChallanDate] = useState(new Date().toISOString().split('T')[0])
   const [quantities, setQuantities] = useState<Record<string, number>>({})
+  const [plateNotes, setPlateNotes] = useState<Record<string, string>>({}) // ADD THIS MISSING STATE
   const [overallNote, setOverallNote] = useState('')
   const [stockData, setStockData] = useState<Stock[]>([])
   const [loading, setLoading] = useState(false)
   const [stockValidation, setStockValidation] = useState<StockValidation[]>([])
   const [challanData, setChallanData] = useState<ChallanData | null>(null)
+
+  // ... (keep all existing useEffect and functions the same until handleSubmit)
 
   useEffect(() => {
     fetchStockData()
@@ -67,7 +63,6 @@ export function IssueRental() {
 
   const generateNextChallanNumber = async () => {
     try {
-      // Fetch all existing issue challans to find the highest numeric value
       const { data, error } = await supabase
         .from('challans')
         .select('challan_number')
@@ -77,7 +72,6 @@ export function IssueRental() {
 
       let maxNumber = 0
       if (data && data.length > 0) {
-        // Extract all numeric values and find the absolute maximum
         data.forEach(challan => {
           const match = challan.challan_number.match(/\d+/)
           if (match) {
@@ -89,17 +83,14 @@ export function IssueRental() {
         })
       }
 
-      // Always increment by 1 from the highest found number
       const nextNumber = (maxNumber + 1).toString()
       setSuggestedChallanNumber(nextNumber)
       
-      // Set as default only if current challan number is empty
       if (!challanNumber) {
         setChallanNumber(nextNumber)
       }
     } catch (error) {
       console.error('Error generating challan number:', error)
-      // Fallback to starting from 1
       const fallback = '1'
       setSuggestedChallanNumber(fallback)
       if (!challanNumber) {
@@ -110,8 +101,6 @@ export function IssueRental() {
 
   const handleChallanNumberChange = (value: string) => {
     setChallanNumber(value)
-    
-    // If user clears the input, suggest the next available number
     if (!value.trim()) {
       setChallanNumber(suggestedChallanNumber)
     }
@@ -159,20 +148,17 @@ export function IssueRental() {
     setLoading(true)
 
     try {
-      // Validate challan number
       if (!challanNumber.trim()) {
         alert('Please enter a challan number.')
         return
       }
 
-      // Check if challan number already exists
       const exists = await checkChallanNumberExists(challanNumber)
       if (exists) {
         alert('Challan number already exists. Please use a different number.')
         return
       }
 
-      // Filter out plates with zero quantities
       const validItems = PLATE_SIZES.filter(size => quantities[size] > 0)
       
       if (validItems.length === 0) {
@@ -180,7 +166,6 @@ export function IssueRental() {
         return
       }
 
-      // Check for stock validation errors
       if (stockValidation.length > 0) {
         if (!overallNote.trim()) {
           alert('Please add a note for items with insufficient stock.')
@@ -188,7 +173,6 @@ export function IssueRental() {
         }
       }
 
-      // Create the challan
       const { data: challan, error: challanError } = await supabase
         .from('challans')
         .insert([{
@@ -201,12 +185,11 @@ export function IssueRental() {
 
       if (challanError) throw challanError
 
-      // Create line items
       const lineItems = validItems.map(size => ({
         challan_id: challan.id,
         plate_size: size,
         borrowed_quantity: quantities[size],
-        partner_stock_notes: overallNote.trim() || null
+        partner_stock_notes: plateNotes[size]?.trim() || null // FIX: Use plateNotes instead of overallNote
       }))
 
       const { error: lineItemsError } = await supabase
@@ -215,7 +198,7 @@ export function IssueRental() {
 
       if (lineItemsError) throw lineItemsError
 
-      // Prepare challan data for PDF
+      // FIXED: Prepare challan data with correct notes
       const newChallanData: ChallanData = {
         type: 'issue',
         challan_number: challan.challan_number,
@@ -229,24 +212,22 @@ export function IssueRental() {
         plates: validItems.map(size => ({
           size,
           quantity: quantities[size],
-          notes: overallNote || '',
+          notes: plateNotes[size] || '', // FIX: Use per-plate notes
         })),
         total_quantity: validItems.reduce((sum, size) => sum + quantities[size], 0)
       };
 
-      // Update state to render the challan
       setChallanData(newChallanData);
       
-      // Wait for the component to render
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait longer for proper rendering
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Generate and download the PDF
       try {
         const jpgDataUrl = await generateJPGChallan(newChallanData);
         downloadJPGChallan(jpgDataUrl, `issue-challan-${challan.challan_number}`);
 
-        // Reset form after successful PDF generation
         setQuantities({})
+        setPlateNotes({}) // FIX: Reset plateNotes too
         setOverallNote('')
         setChallanNumber('')
         setSelectedClient(null)
@@ -254,7 +235,7 @@ export function IssueRental() {
         setChallanData(null)
         
         alert(`Challan ${challan.challan_number} created and downloaded successfully!`)
-        await fetchStockData() // Refresh stock data
+        await fetchStockData()
       } catch (error) {
         console.error('JPG generation failed:', error);
         alert('Error generating challan image. The challan was created but could not be downloaded.');
@@ -277,29 +258,36 @@ export function IssueRental() {
 
   return (
     <div className="space-y-8">
-      {/* Hidden Printable Challan */}
-      <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
+      {/* FIXED: Better positioned hidden element for JPG generation */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '-10000px', 
+        left: '0', 
+        width: '800px', 
+        height: 'auto',
+        backgroundColor: 'white'
+      }}>
         {challanData && (
-          <div id={`challan-${challanData.challan_number}`}>
-            <PrintableChallan
-              data={challanData}
-            />
+          <div id={`challan-${challanData.challan_number}`} style={{ 
+            transform: 'scale(1)', 
+            transformOrigin: 'top left',
+            width: '100%'
+          }}>
+            <PrintableChallan data={challanData} />
           </div>
         )}
       </div>
-      {/* Header */}
+
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Issue Rental (Udhar)</h1>
         <p className="text-gray-600">Create a new rental challan for plate issuance</p>
       </div>
 
-      {/* Client Selection */}
       <ClientSelector 
         onClientSelect={setSelectedClient}
         selectedClient={selectedClient}
       />
 
-      {/* Rental Form */}
       {selectedClient && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
@@ -310,7 +298,6 @@ export function IssueRental() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Challan Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 rounded-lg p-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -341,7 +328,6 @@ export function IssueRental() {
               </div>
             </div>
 
-            {/* Stock Validation Warning */}
             {stockValidation.length > 0 && (
               <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg">
                 <AlertTriangle className="w-4 h-4" />
@@ -349,36 +335,22 @@ export function IssueRental() {
               </div>
             )}
 
-            {/* Plates Table */}
-            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
-              <table className="w-full min-w-[400px] md:min-w-full table-auto border border-gray-200 rounded-lg">
+            {/* FIXED: Proper table structure */}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px] border border-gray-200 rounded-lg">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">
                       Plate Size
                     </th>
-                    <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">
                       Available Stock
                     </th>
-                    <th className="px-2 py-3 md:px-4 md:py-3 text-left text-sm font-medium text-gray-700 border-b">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">
                       Quantity to Borrow
-                      
-                      {/* Individual Note Field */}
-                      <div className="mt-2">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
-                          નોંધ (Note)
-                        </label>
-                        <textarea
-                          value={plateNotes[size] || ''}
-                          onChange={(e) => setPlateNotes(prev => ({
-                            ...prev,
-                            [size]: e.target.value
-                          }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm resize-none"
-                          rows={2}
-                          placeholder="Enter notes for this plate size..."
-                        />
-                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">
+                      Notes
                     </th>
                   </tr>
                 </thead>
@@ -389,18 +361,18 @@ export function IssueRental() {
                     
                     return (
                       <tr key={size} className={`border-b hover:bg-gray-50 ${isInsufficient ? 'bg-red-50' : ''}`}>
-                        <td className="px-2 py-2 md:px-4 md:py-3">
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <Package className="w-4 h-4 text-gray-500" />
                             <span className="font-medium text-gray-900">{size}</span>
                           </div>
                         </td>
-                        <td className="px-2 py-2 md:px-4 md:py-3">
+                        <td className="px-4 py-3">
                           <span className={`text-sm ${stockInfo ? 'text-gray-600' : 'text-red-500'}`}>
                             {stockInfo ? stockInfo.available_quantity : 'N/A'}
                           </span>
                         </td>
-                        <td className="px-2 py-2 md:px-4 md:py-3">
+                        <td className="px-4 py-3">
                           <input
                             type="number"
                             min="0"
@@ -419,6 +391,19 @@ export function IssueRental() {
                             </p>
                           )}
                         </td>
+                        <td className="px-4 py-3">
+                          {/* FIXED: Moved note field to proper table cell */}
+                          <textarea
+                            value={plateNotes[size] || ''}
+                            onChange={(e) => setPlateNotes(prev => ({
+                              ...prev,
+                              [size]: e.target.value
+                            }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm resize-none"
+                            rows={2}
+                            placeholder="Enter notes..."
+                          />
+                        </td>
                       </tr>
                     )
                   })}
@@ -426,7 +411,20 @@ export function IssueRental() {
               </table>
             </div>
 
-            {/* Subtotal */}
+            {/* Overall Note */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Overall Note (Required for insufficient stock items)
+              </label>
+              <textarea
+                value={overallNote}
+                onChange={(e) => setOverallNote(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base resize-none"
+                rows={3}
+                placeholder="Enter any overall notes for this challan..."
+              />
+            </div>
+
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="text-center">
                 <span className="text-xl font-semibold text-green-900">
@@ -435,7 +433,6 @@ export function IssueRental() {
               </div>
             </div>
 
-            {/* Submit Button */}
             <div className="flex justify-end">
               <button
                 type="submit"
