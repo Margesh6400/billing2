@@ -22,13 +22,43 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
     setError('')
     setSuccess('')
 
+    // Basic validation
+    if (!email.trim()) {
+      setError('Please enter your email address')
+      setLoading(false)
+      return
+    }
+
+    if (!password.trim()) {
+      setError('Please enter your password')
+      setLoading(false)
+      return
+    }
+
+    if (mode === 'signup' && password.length < 6) {
+      setError('Password must be at least 6 characters long')
+      setLoading(false)
+      return
+    }
     try {
       const { error } = mode === 'signup' 
         ? await signUp(email, password)
         : await signIn(email, password)
 
       if (error) {
-        setError(error.message)
+        // Provide more user-friendly error messages
+        if (error.message.includes('Invalid login credentials')) {
+          setError(mode === 'signin' 
+            ? 'Invalid email or password. Please check your credentials and try again.'
+            : 'Unable to create account. Please try again.'
+          )
+        } else if (error.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before signing in.')
+        } else if (error.message.includes('User already registered')) {
+          setError('An account with this email already exists. Please sign in instead.')
+        } else {
+          setError(error.message)
+        }
       } else if (mode === 'signup') {
         setSuccess('Account created successfully! You can now sign in.')
         setEmail('')
@@ -36,7 +66,8 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
         setTimeout(() => onModeChange('signin'), 2000)
       }
     } catch (err) {
-      setError('An unexpected error occurred')
+      console.error('Authentication error:', err)
+      setError('Connection error. Please check your internet connection and try again.')
     } finally {
       setLoading(false)
     }

@@ -25,23 +25,36 @@ export function useAuth() {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
+    
+    if (data?.user) {
+      console.log('Sign in successful for user:', data.user.email)
+    }
+    
     return { error }
   }
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
+    
+    if (data?.user) {
+      console.log('Sign up successful for user:', data.user.email)
+    }
+    
     return { error }
   }
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
+    if (!error) {
+      console.log('Sign out successful')
+    }
     return { error }
   }
 
