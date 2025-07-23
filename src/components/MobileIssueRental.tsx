@@ -97,7 +97,7 @@ export function MobileIssueRental() {
       
       setSuggestedChallanNumber(nextNumber);
       
-      // Auto-fill only if field is empty
+      // Auto-fill only if field is empty mk
       if (!challanNumber) setChallanNumber(nextNumber);
       
     } catch (error) {
