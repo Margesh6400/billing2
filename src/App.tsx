@@ -17,6 +17,7 @@ import { Loader2 } from 'lucide-react'
 
 function App() {
   const { user, loading } = useAuth()
+  const [authMode, setAuthMode] = React.useState<'signin' | 'signup'>('signin')
 
   if (loading) {
     return (
@@ -30,7 +31,7 @@ function App() {
   }
 
   if (!user) {
-    return <AuthForm mode="signin" onModeChange={() => {}} />;
+    return <AuthForm mode={authMode} onModeChange={setAuthMode} />;
   }
 
   return (
