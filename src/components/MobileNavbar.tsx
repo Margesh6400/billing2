@@ -77,13 +77,13 @@ export function MobileNavbar() {
 
   return (
     <>
-      {/* TOP BAR - Always Visible */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg font-noto-gujarati">
-        <div className="flex items-center justify-between px-4 h-16">
+      {/* TOP BAR - Blue Theme Gradient */}
+      <header className="fixed top-0 left-0 right-0 z-50 shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 font-noto-gujarati">
+        <div className="flex items-center justify-between h-16 px-4">
           {/* Hamburger Menu Button */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="p-2 rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="p-2 rounded-lg hover:bg-blue-500/20 active:bg-blue-500/30 transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center transform hover:scale-105"
             aria-label="Open menu"
           >
             <Menu className="w-6 h-6 text-white" />
@@ -91,62 +91,62 @@ export function MobileNavbar() {
 
           {/* App Title */}
           <div className="text-center">
-            <h1 className="text-xl font-bold text-white leading-tight">
+            <h1 className="text-xl font-bold leading-tight text-white">
               NO WERE TECH
             </h1>
             <p className="text-xs text-blue-100">સેન્ટરિંગ પ્લેટ્સ ભાડા</p>
           </div>
 
-          {/* User Avatar */}
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">
+          {/* User Avatar - Enhanced Blue Theme */}
+          <div className="flex items-center justify-center w-10 h-10 border-2 border-blue-300 rounded-full shadow-lg bg-gradient-to-r from-blue-500 to-indigo-500">
+            <span className="text-sm font-semibold text-white">
               {getUserInitials()}
             </span>
           </div>
         </div>
       </header>
 
-      {/* HAMBURGER MENU OVERLAY */}
+      {/* HAMBURGER MENU OVERLAY - Enhanced Blue Theme */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-[100] font-noto-gujarati">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-blue-900/30 backdrop-blur-sm"
             onClick={() => setIsMenuOpen(false)}
           />
 
           {/* Menu Panel */}
-          <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col">
-            {/* Menu Header */}
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col border-r-4 border-blue-500">
+            {/* Menu Header - Blue Theme */}
+            <div className="flex items-center justify-between p-4 text-white shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
               <h2 className="text-lg font-semibold">મેનુ</h2>
               <button
                 onClick={() => setIsMenuOpen(false)}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2 rounded-lg hover:bg-blue-500/20 transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center transform hover:scale-105"
                 aria-label="Close menu"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* User Info Section */}
-            <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+            {/* User Info Section - Blue Theme */}
+            <div className="flex-shrink-0 p-4 border-b-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
               <div className="flex items-center space-x-3">
-                {/* User Avatar */}
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                {/* User Avatar - Enhanced */}
+                <div className="flex items-center justify-center w-12 h-12 text-lg font-semibold text-white border-2 border-blue-300 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
                   {getUserInitials()}
                 </div>
                 
                 {/* User Details */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 truncate">
+                  <p className="font-semibold text-blue-900 truncate">
                     {user?.user_metadata?.name || 'વપરાશકર્તા'}
                   </p>
                   
                   {/* Email Toggle */}
                   <button
                     onClick={() => setShowUserEmail(!showUserEmail)}
-                    className="text-xs text-gray-600 hover:text-gray-800 transition-colors mt-1 truncate max-w-full block text-left"
+                    className="block max-w-full mt-1 text-xs font-medium text-left text-blue-600 truncate transition-colors hover:text-blue-800"
                   >
                     {showUserEmail ? (
                       <span className="truncate">{user?.email}</span>
@@ -158,29 +158,29 @@ export function MobileNavbar() {
               </div>
             </div>
 
-            {/* Navigation Items */}
-            <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-gray-300">
+            {/* Navigation Items - Enhanced Blue Theme */}
+            <nav className="flex-1 py-2 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
               {NAVIGATION_ITEMS.map((item) => (
                 <Link
                   key={item.key}
                   to={item.path}
-                  className={`flex items-center space-x-4 px-6 py-4 text-base font-medium transition-colors min-h-[56px] ${
+                  className={`flex items-center space-x-4 px-6 py-3 text-sm font-medium transition-all duration-200 min-h-[52px] mx-2 my-1 rounded-xl ${
                     isActivePath(item.path)
-                      ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105 border-l-4 border-blue-300'
+                      : 'text-blue-700 hover:bg-blue-50 hover:text-blue-800 hover:shadow-md hover:scale-102'
                   }`}
                 >
-                  <item.icon className="w-6 h-6 flex-shrink-0" />
+                  <item.icon className="flex-shrink-0 w-5 h-5" />
                   <span className="truncate">{item.label}</span>
                 </Link>
               ))}
             </nav>
 
-            {/* Settings & Sign Out */}
-            <div className="border-t border-gray-200 p-4 space-y-2 flex-shrink-0">
+            {/* Settings & Sign Out - Blue Theme */}
+            <div className="flex-shrink-0 p-4 space-y-2 border-t-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
               <button
                 onClick={() => {/* Add settings logic */}}
-                className="w-full flex items-center space-x-4 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors min-h-[48px]"
+                className="w-full flex items-center space-x-4 px-4 py-3 text-blue-700 hover:bg-blue-100 rounded-xl transition-all duration-200 min-h-[48px] font-medium hover:shadow-md transform hover:scale-105"
               >
                 <Settings className="w-5 h-5" />
                 સેટિંગ્સ
@@ -188,7 +188,7 @@ export function MobileNavbar() {
 
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center space-x-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors min-h-[48px]"
+                className="w-full flex items-center space-x-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 min-h-[48px] font-medium hover:shadow-md transform hover:scale-105 border border-red-200"
               >
                 <LogOut className="w-5 h-5" />
                 સાઇન આઉટ
@@ -198,21 +198,28 @@ export function MobileNavbar() {
         </div>
       )}
 
-      {/* BOTTOM TAB BAR (Quick Access) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg font-noto-gujarati">
-        <div className="grid grid-cols-4 h-16">
+      {/* BOTTOM TAB BAR - Enhanced Blue Theme */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-blue-100 shadow-xl font-noto-gujarati">
+        <div className="grid h-16 grid-cols-4 bg-gradient-to-r from-blue-50 to-indigo-50">
           {BOTTOM_NAV_ITEMS.map((item) => (
             <Link
               key={item.key}
               to={item.path}
-              className={`flex flex-col items-center justify-center space-y-1 transition-all duration-200 min-h-[64px] ${
+              className={`flex flex-col items-center justify-center space-y-1 transition-all duration-200 min-h-[64px] relative ${
                 isActivePath(item.path)
-                  ? 'text-blue-600 bg-blue-50 scale-105'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'text-blue-600 bg-gradient-to-t from-blue-100 to-blue-50 scale-105 shadow-lg'
+                  : 'text-blue-500 hover:text-blue-700 hover:bg-blue-25 hover:scale-102'
               }`}
             >
+              {/* Active indicator */}
+              {isActivePath(item.path) && (
+                <div className="absolute top-0 w-8 h-1 transform -translate-x-1/2 rounded-b-full left-1/2 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+              )}
+              
               <item.icon className={`w-5 h-5 ${isActivePath(item.path) ? 'animate-pulse' : ''}`} />
-              <span className="text-xs font-medium truncate px-1">
+              <span className={`text-xs font-medium truncate px-1 ${
+                isActivePath(item.path) ? 'font-bold' : ''
+              }`}>
                 {item.label}
               </span>
             </Link>

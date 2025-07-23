@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../lib/supabase';
-import { Plus, Search, User, Phone, MapPin, Hash, Edit3, Trash2, Save, X } from 'lucide-react';
+import { Plus, Search, User, Phone, MapPin, Hash, Edit3, Trash2, Save, X, Users } from 'lucide-react';
 import { T } from '../contexts/LanguageContext';
 
 type Client = Database['public']['Tables']['clients']['Row'];
@@ -54,10 +54,10 @@ export function MobileClientsPage() {
       setClients([data, ...clients]);
       setShowAddForm(false);
       setNewClient({ id: '', name: '', site: '', mobile_number: '' });
-      alert('Client added successfully!');
+      alert('ગ્રાહક સફળતાપૂર્વક ઉમેરવામાં આવ્યો!');
     } catch (error) {
       console.error('Error adding client:', error);
-      alert('Error adding client. Please check if the ID is unique.');
+      alert('ગ્રાહક ઉમેરવામાં ભૂલ. કૃપા કરીને તપાસો કે ID અનન્ય છે.');
     }
   };
 
@@ -74,15 +74,15 @@ export function MobileClientsPage() {
         client.id === clientId ? { ...client, ...updatedData } : client
       ));
       setEditingClient(null);
-      alert('Client updated successfully!');
+      alert('ગ્રાહક સફળતાપૂર્વક અપડેટ થયો!');
     } catch (error) {
       console.error('Error updating client:', error);
-      alert('Error updating client.');
+      alert('ગ્રાહક અપડેટ કરવામાં ભૂલ.');
     }
   };
 
   const handleDeleteClient = async (clientId: string) => {
-    if (!confirm('Are you sure you want to delete this client?')) return;
+    if (!confirm('શું તમે ખરેખર આ ગ્રાહકને ડિલીટ કરવા માંગો છો?')) return;
 
     try {
       const { error } = await supabase
@@ -93,10 +93,10 @@ export function MobileClientsPage() {
       if (error) throw error;
 
       setClients(clients.filter(client => client.id !== clientId));
-      alert('Client deleted successfully!');
+      alert('ગ્રાહક સફળતાપૂર્વક ડિલીટ થયો!');
     } catch (error) {
       console.error('Error deleting client:', error);
-      alert('Error deleting client. They may have existing transactions.');
+      alert('ગ્રાહક ડિલીટ કરવામાં ભૂલ. તેમના અસ્તિત્વમાં ટ્રાન્ઝેક્શન હોઈ શકે છે.');
     }
   };
 
@@ -108,178 +108,217 @@ export function MobileClientsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-24 bg-gray-200 rounded-xl"></div>
-        ))}
+      <div className="min-h-screen pb-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
+        <div className="p-3 space-y-3">
+          <div className="pt-2 text-center">
+            <div className="w-32 h-5 mx-auto mb-1 bg-blue-200 rounded animate-pulse"></div>
+            <div className="w-40 h-3 mx-auto bg-blue-200 rounded animate-pulse"></div>
+          </div>
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="p-3 bg-white border border-blue-100 rounded-lg shadow-sm animate-pulse">
+              <div className="w-2/3 h-4 mb-2 bg-blue-200 rounded"></div>
+              <div className="w-1/2 h-3 bg-blue-200 rounded"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 pb-4">
-      {/* Header */}
-      <div className="text-center pt-2">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">
-          <T>Clients</T>
-        </h1>
-        <p className="text-sm text-gray-600">ગ્રાહકો - Manage your clients</p>
-      </div>
-
-      {/* Search and Add */}
-      <div className="space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-            placeholder="Search clients..."
-          />
-        </div>
-
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          <T>Add New</T> Client
-        </button>
-      </div>
-
-      {/* Add Form */}
-      {showAddForm && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Client</h3>
-          <form onSubmit={handleAddClient} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <T>Client ID</T> *
-              </label>
-              <input
-                type="text"
-                value={newClient.id}
-                onChange={(e) => setNewClient({ ...newClient, id: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                placeholder="Enter unique ID"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <T>Name</T> *
-              </label>
-              <input
-                type="text"
-                value={newClient.name}
-                onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                placeholder="Client name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <T>Site</T> *
-              </label>
-              <input
-                type="text"
-                value={newClient.site}
-                onChange={(e) => setNewClient({ ...newClient, site: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                placeholder="Site location"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <T>Mobile Number</T> *
-              </label>
-              <input
-                type="tel"
-                value={newClient.mobile_number}
-                onChange={(e) => setNewClient({ ...newClient, mobile_number: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                placeholder="Mobile number"
-                required
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-medium transition-colors"
-              >
-                <T>Save</T>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAddForm(false)}
-                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2.5 rounded-lg font-medium transition-colors"
-              >
-                <T>Cancel</T>
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Clients List */}
-      <div className="space-y-3">
-        {filteredClients.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <User className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>{searchTerm ? 'No clients found' : 'No clients added yet'}</p>
+    <div className="min-h-screen pb-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
+      <div className="p-3 space-y-4">
+        {/* Blue Themed Header */}
+        <div className="pt-2 text-center">
+          <div className="inline-flex items-center justify-center w-10 h-10 mb-2 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
+            <Users className="w-5 h-5 text-white" />
           </div>
-        ) : (
-          filteredClients.map((client) => (
-            <div key={client.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              {editingClient === client.id ? (
-                <EditClientForm
-                  client={client}
-                  onSave={(updatedData) => handleUpdateClient(client.id, updatedData)}
-                  onCancel={() => setEditingClient(null)}
+          <h1 className="mb-1 text-base font-bold text-gray-900">ગ્રાહકો</h1>
+          <p className="text-xs text-blue-600">તમારા ગ્રાહકોનું સંચાલન</p>
+        </div>
+
+        {/* Blue Themed Search and Add Controls */}
+        <div className="overflow-hidden bg-white border-2 border-blue-100 shadow-lg rounded-xl">
+          <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-white">
+              <Search className="w-4 h-4" />
+              શોધો અને ઉમેરો
+            </h2>
+          </div>
+          
+          <div className="p-3 space-y-3">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute w-4 h-4 text-blue-400 transform -translate-y-1/2 left-3 top-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full py-2 pl-10 pr-3 text-sm transition-all duration-200 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                placeholder="ગ્રાહકો શોધો..."
+              />
+            </div>
+
+            {/* Add Button */}
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="flex items-center justify-center w-full gap-2 py-2 text-sm font-medium text-white transition-all duration-200 transform rounded-lg shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:scale-105"
+            >
+              <Plus className="w-4 h-4" />
+              નવો ગ્રાહક ઉમેરો
+            </button>
+          </div>
+        </div>
+
+        {/* Blue Themed Add Form */}
+        {showAddForm && (
+          <div className="overflow-hidden bg-white border-2 border-blue-100 shadow-lg rounded-xl">
+            <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500">
+              <h3 className="text-sm font-bold text-white">નવો ગ્રાહક ઉમેરો</h3>
+            </div>
+            
+            <form onSubmit={handleAddClient} className="p-3 space-y-3">
+              <div>
+                <label className="block mb-1 text-xs font-medium text-blue-700">
+                  ગ્રાહક ID *
+                </label>
+                <input
+                  type="text"
+                  value={newClient.id}
+                  onChange={(e) => setNewClient({ ...newClient, id: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  placeholder="અનન્ય ID દાખલ કરો"
+                  required
                 />
-              ) : (
-                <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 text-lg">{client.name}</h3>
-                      <div className="space-y-1 mt-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Hash className="w-4 h-4" />
-                          <span>ID: {client.id}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4" />
-                          <span>{client.site}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Phone className="w-4 h-4" />
-                          <span>{client.mobile_number}</span>
+              </div>
+              <div>
+                <label className="block mb-1 text-xs font-medium text-blue-700">
+                  નામ *
+                </label>
+                <input
+                  type="text"
+                  value={newClient.name}
+                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  placeholder="ગ્રાહકનું નામ"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-xs font-medium text-blue-700">
+                  સાઇટ *
+                </label>
+                <input
+                  type="text"
+                  value={newClient.site}
+                  onChange={(e) => setNewClient({ ...newClient, site: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  placeholder="સાઇટ સ્થાન"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-xs font-medium text-blue-700">
+                  મોબાઇલ નંબર *
+                </label>
+                <input
+                  type="tel"
+                  value={newClient.mobile_number}
+                  onChange={(e) => setNewClient({ ...newClient, mobile_number: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  placeholder="મોબાઇલ નંબર"
+                  required
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 py-2 text-sm font-medium text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700"
+                >
+                  સેવ કરો
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="flex-1 py-2 text-sm font-medium text-white transition-colors bg-gray-500 rounded-lg hover:bg-gray-600"
+                >
+                  રદ કરો
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Blue Themed Clients List */}
+        <div className="space-y-3">
+          {filteredClients.length === 0 ? (
+            <div className="py-8 text-center bg-white border-2 border-blue-100 shadow-lg rounded-xl">
+              <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-200 to-indigo-200">
+                <User className="w-8 h-8 text-blue-400" />
+              </div>
+              <p className="mb-1 font-medium text-gray-700">
+                {searchTerm ? 'કોઈ ગ્રાહક મળ્યો નથી' : 'હજુ સુધી કોઈ ગ્રાહક ઉમેરવામાં આવ્યો નથી'}
+              </p>
+              <p className="text-xs text-blue-600">
+                {searchTerm ? 'શોધ શબ્દ બદલીને પ્રયત્ન કરો' : 'નવા ગ્રાહકો ઉમેરવાનું શરૂ કરો'}
+              </p>
+            </div>
+          ) : (
+            filteredClients.map((client) => (
+              <div key={client.id} className="overflow-hidden transition-all duration-200 bg-white border-2 border-blue-100 shadow-lg rounded-xl hover:shadow-xl hover:border-blue-200">
+                {editingClient === client.id ? (
+                  <EditClientForm
+                    client={client}
+                    onSave={(updatedData) => handleUpdateClient(client.id, updatedData)}
+                    onCancel={() => setEditingClient(null)}
+                  />
+                ) : (
+                  <>
+                    <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500">
+                      <div className="flex items-center justify-between">
+                        <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
+                            <User className="w-3 h-3 text-white" />
+                          </div>
+                          {client.name}
+                        </h3>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setEditingClient(client.id)}
+                            className="p-1.5 text-white hover:bg-blue-400/20 rounded-lg transition-colors"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClient(client.id)}
+                            className="p-1.5 text-white hover:bg-red-400/20 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setEditingClient(client.id)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClient(client.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    
+                    <div className="p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-blue-600">
+                        <Hash className="w-3 h-3" />
+                        <span className="font-medium">ID: {client.id}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-blue-600">
+                        <MapPin className="w-3 h-3" />
+                        <span>{client.site}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-blue-600">
+                        <Phone className="w-3 h-3" />
+                        <span>{client.mobile_number}</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))
-        )}
+                  </>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
@@ -304,60 +343,66 @@ function EditClientForm({ client, onSave, onCancel }: EditClientFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          <T>Name</T>
-        </label>
-        <input
-          type="text"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          required
-        />
+    <>
+      <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500">
+        <h3 className="text-sm font-bold text-white">ગ્રાહક એડિટ કરો</h3>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          <T>Site</T>
-        </label>
-        <input
-          type="text"
-          value={formData.site}
-          onChange={(e) => setFormData({ ...formData, site: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          <T>Mobile Number</T>
-        </label>
-        <input
-          type="tel"
-          value={formData.mobile_number}
-          onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-          required
-        />
-      </div>
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-        >
-          <Save className="w-4 h-4" />
-          <T>Save</T>
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-        >
-          <X className="w-4 h-4" />
-          <T>Cancel</T>
-        </button>
-      </div>
-    </form>
+      
+      <form onSubmit={handleSubmit} className="p-3 space-y-3">
+        <div>
+          <label className="block mb-1 text-xs font-medium text-blue-700">
+            નામ *
+          </label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block mb-1 text-xs font-medium text-blue-700">
+            સાઇટ *
+          </label>
+          <input
+            type="text"
+            value={formData.site}
+            onChange={(e) => setFormData({ ...formData, site: e.target.value })}
+            className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block mb-1 text-xs font-medium text-blue-700">
+            મોબાઇલ નંબર *
+          </label>
+          <input
+            type="tel"
+            value={formData.mobile_number}
+            onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
+            className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+            required
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="flex items-center justify-center flex-1 gap-1 py-2 text-sm font-medium text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700"
+          >
+            <Save className="w-3 h-3" />
+            સેવ કરો
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center justify-center flex-1 gap-1 py-2 text-sm font-medium text-white transition-colors bg-gray-500 rounded-lg hover:bg-gray-600"
+          >
+            <X className="w-3 h-3" />
+            રદ કરો
+          </button>
+        </div>
+      </form>
+    </>
   );
 }

@@ -6,22 +6,16 @@ import {
   Package, 
   Users, 
   FileText, 
-  AlertTriangle,
   CheckCircle,
-  Clock,
   Plus,
   ArrowRight,
   Calendar,
-  Sun,
-  Cloud,
-  CloudRain,
-  Wind,
-  Droplets,
-  Bell,
   Activity,
   DollarSign,
-  BarChart3,
-  RotateCcw
+  RotateCcw,
+  Home,
+  Clock,
+  BookOpen
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -47,18 +41,6 @@ interface RecentActivity {
   status: string;
 }
 
-interface LowStockAlert {
-  plate_size: string;
-  available_quantity: number;
-  threshold: number;
-}
-
-interface WeatherData {
-  temperature: number;
-  condition: 'sunny' | 'cloudy' | 'rainy';
-  humidity: number;
-}
-
 export function MobileDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     activeUdharChallans: 0,
@@ -72,12 +54,6 @@ export function MobileDashboard() {
     totalStock: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [lowStockAlerts, setLowStockAlerts] = useState<LowStockAlert[]>([]);
-  const [weather] = useState<WeatherData>({
-    temperature: 32,
-    condition: 'sunny',
-    humidity: 45
-  });
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -116,7 +92,7 @@ export function MobileDashboard() {
       // Calculate stats
       const totalClients = clientsResult.count || 0;
       const activeUdharChallans = challansResult.data?.filter(c => c.status === 'active').length || 0;
-      const pendingJamaReturns = activeUdharChallans; // Assuming pending returns = active challans
+      const pendingJamaReturns = activeUdharChallans;
       
       const stockData = stockResult.data || [];
       const onRentPlates = stockData.reduce((sum, item) => sum + item.on_rent_quantity, 0);
@@ -170,29 +146,10 @@ export function MobileDashboard() {
 
       setRecentActivity([...recentChallans, ...recentReturns].slice(0, 5));
 
-      // Set low stock alerts
-      const lowStock = stockData
-        .filter(item => item.available_quantity < 10)
-        .map(item => ({
-          plate_size: item.plate_size,
-          available_quantity: item.available_quantity,
-          threshold: 10
-        }));
-      setLowStockAlerts(lowStock);
-
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getWeatherIcon = () => {
-    switch (weather.condition) {
-      case 'sunny': return <Sun className="w-6 h-6 text-yellow-500" />;
-      case 'cloudy': return <Cloud className="w-6 h-6 text-gray-500" />;
-      case 'rainy': return <CloudRain className="w-6 h-6 text-blue-500" />;
-      default: return <Sun className="w-6 h-6 text-yellow-500" />;
     }
   };
 
@@ -207,7 +164,13 @@ export function MobileDashboard() {
       hour12: true 
     });
     
-    return `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]}, ${today.getFullYear()} · ${timeString}`;
+    return {
+      day: dayNames[today.getDay()],
+      date: today.getDate(),
+      month: monthNames[today.getMonth()],
+      year: today.getFullYear(),
+      time: timeString
+    };
   };
 
   const getTimeAgo = (dateString: string) => {
@@ -223,314 +186,236 @@ export function MobileDashboard() {
 
   if (loading) {
     return (
-      <div className="space-y-6 pb-24 animate-pulse">
-        <div className="h-32 bg-gray-200 rounded-xl"></div>
-        <div className="grid grid-cols-2 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-xl"></div>
-          ))}
+      <div className="min-h-screen pb-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
+        <div className="p-3 space-y-4">
+          <div className="pt-2 text-center">
+            <div className="w-48 h-6 mx-auto mb-2 bg-blue-200 rounded animate-pulse"></div>
+            <div className="w-32 h-4 mx-auto bg-blue-200 rounded animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-20 bg-white border border-blue-100 rounded-lg shadow-sm animate-pulse"></div>
+            ))}
+          </div>
+          <div className="p-4 bg-white border border-blue-100 rounded-lg shadow-sm animate-pulse">
+            <div className="w-32 h-4 mb-3 bg-blue-200 rounded"></div>
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-12 bg-blue-100 rounded"></div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  const dateInfo = getGujaratiDate();
+
   return (
-    <div className="space-y-6 pb-24">
-      {/* Time and Date Header */}
-      <div className="text-center pt-4">
-        <h1 className="text-lg font-bold text-gray-900 mb-2">
-          નીલકંઠ પ્લેટ ડેપો
-        </h1>
-        <p className="text-base text-gray-700 font-medium mb-4">
-          {getGujaratiDate()}
-        </p>
-      </div>
-
-      {/* Weather Widget */}
-      <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {getWeatherIcon()}
-            <div>
-              <div className="text-2xl font-bold">31°C</div>
-              <div className="text-sm opacity-90">Mostly cloudy</div>
+    <div className="min-h-screen pb-24 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
+      <div className="p-3 space-y-4">
+        {/* Enhanced Date and Time Header */}
+        <div className="pt-4 text-center">
+          <div className="p-4 mx-2 bg-white border-2 border-blue-100 shadow-lg rounded-2xl">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600">
+                <Calendar className="w-4 h-4 text-white" />
+              </div>
+              <h1 className="text-lg font-bold text-blue-900">આજનો દિવસ</h1>
+            </div>
+            
+            <div className="p-3 border border-blue-200 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl">
+              <div className="text-center">
+                <div className="mb-1 text-base font-bold text-blue-800">
+                  {dateInfo.day}
+                </div>
+                <div className="flex items-center justify-center gap-2 text-sm text-blue-700">
+                  <span className="font-semibold">{dateInfo.date}</span>
+                  <span>{dateInfo.month}</span>
+                  <span className="font-semibold">{dateInfo.year}</span>
+                </div>
+                <div className="flex items-center justify-center gap-1 mt-2 text-xs text-blue-600">
+                  <Clock className="w-3 h-3" />
+                  <span className="font-medium">{dateInfo.time}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-lg font-semibold">સુરત</div>
-            <div className="text-sm opacity-90 flex items-center gap-1">
-              <Droplets className="w-3 h-3" />
-              {weather.humidity}% ભેજ
-            </div>
-          </div>
         </div>
-      </div>
 
-      {/* Quick Access */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 px-1">
-          ઝડપી પ્રવેશ
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          <QuickAccessCard
-            to="/issue"
-            title="ઉધાર ચલણ બનાવો"
-            subtitle="નવું ઉધાર"
-            icon={FileText}
-            color="from-green-500 to-green-600"
-          />
-          <QuickAccessCard
-            to="/return"
-            title="જમા ચલણ બનાવો"
-            subtitle="પ્લેટ્સ પરત"
-            icon={RotateCcw}
-            color="from-blue-500 to-blue-600"
-          />
-          <QuickAccessCard
-            to="/stock"
-            title="સ્ટોક વ્યવસ્થાપન"
-            subtitle="ઇન્વેન્ટરી જુઓ"
-            icon={Package}
-            color="from-purple-500 to-purple-600"
-          />
-          <QuickAccessCard
-            to="/bills"
-            title="બિલ બનાવો"
-            subtitle="નવું બિલ"
-            icon={DollarSign}
-            color="from-orange-500 to-orange-600"
-          />
-        </div>
-      </div>
-
-      {/* Summary Metrics - Horizontal Scroll */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3 px-1">
-          વ્યવસાયિક સારાંશ
-        </h2>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex gap-4 min-w-max">
-            <MetricCard
-              title="કુલ ગ્રાહકો"
-              value={stats.totalClients}
-              icon={Users}
-              color="from-blue-500 to-blue-600"
-            />
-            <MetricCard
-              title="સક્રિય ભાડા"
-              value={stats.activeUdharChallans}
-              icon={FileText}
-              color="from-green-500 to-green-600"
-            />
-            <MetricCard
-              title="બાકી વળતર"
-              value={stats.pendingJamaReturns}
-              icon={Clock}
-              color="from-yellow-500 to-yellow-600"
-            />
-            <MetricCard
-              title="કુલ સ્ટોક"
-              value={stats.totalStock}
-              icon={Package}
-              color="from-purple-500 to-purple-600"
-            />
-            <MetricCard
-              title="ઓછો સ્ટોક"
-              value={stats.lowStockItems}
-              icon={AlertTriangle}
-              color="from-red-500 to-red-600"
-            />
-            <MetricCard
-              title="બાકી બિલ"
-              value={stats.pendingBills}
-              icon={DollarSign}
-              color="from-orange-500 to-orange-600"
-            />
-            <MetricCard
-              title="કુલ આવક"
-              value={`₹${stats.totalRevenue.toLocaleString('en-IN')}`}
-              icon={TrendingUp}
-              color="from-indigo-500 to-indigo-600"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Alerts Section - Moved down */}
-      {(stats.overdueChallans > 0 || lowStockAlerts.length > 0) && (
+        {/* Quick Access Cards - Blue Theme */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3 px-1">
-            ચેતવણીઓ
+          <h2 className="flex items-center gap-2 px-1 mb-3 text-base font-semibold text-blue-900">
+            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500">
+              <Home className="w-3 h-3 text-white" />
+            </div>
+            ઝડપી પ્રવેશ
           </h2>
-          <div className="space-y-3">
-            {stats.overdueChallans > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 border border-red-200 rounded-xl p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <Bell className="w-6 h-6 text-red-600" />
-                  <div>
-                    <p className="font-semibold text-red-800">
-                      {stats.overdueChallans} ચલણ મુદત વીતી ગઈ છે!
-                    </p>
-                    <p className="text-sm text-red-700">
-                      પ્લેટ્સ પરત કરવાનો સમય થયો છે
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            
-            {lowStockAlerts.map((alert, index) => (
-              <motion.div
-                key={alert.plate_size}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-6 h-6 text-yellow-600" />
-                  <div>
-                    <p className="font-semibold text-yellow-800">
-                      {alert.plate_size} પ્લેટ્સ સ્ટોક ઓછો છે!
-                    </p>
-                    <p className="text-sm text-yellow-700">
-                      માત્ર {alert.available_quantity} પ્લેટ્સ બાકી છે
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-2 gap-3">
+            <QuickAccessCard
+              to="/issue"
+              title="ઉધાર ચલણ"
+              subtitle="નવું ઉધાર બનાવો"
+              icon={FileText}
+              color="from-red-500 to-orange-500"
+              count={stats.activeUdharChallans}
+            />
+            <QuickAccessCard
+              to="/return"
+              title="જમા ચલણ"
+              subtitle="પ્લેટ્સ પરત કરો"
+              icon={RotateCcw}
+              color="from-green-500 to-emerald-500"
+              count={stats.pendingJamaReturns}
+            />
+              <QuickAccessCard
+                to="/mobile-ledger"
+                title="ખાતાવહી"
+                subtitle="ગ્રાહક બાકી જુઓ"
+                icon={BookOpen}
+                color="from-yellow-500 to-amber-500"
+                count={stats.activeUdharChallans}
+              />
+            <QuickAccessCard
+              to="/stock"
+              title="સ્ટોક"
+              subtitle="ઇન્વેન્ટરી જુઓ"
+              icon={Package}
+              color="from-purple-500 to-violet-500"
+              count={stats.totalStock}
+            />
+            <QuickAccessCard
+              to="/mobile-clients"
+              title="ગ્રાહક વ્યવસ્થા"
+              subtitle="ગ્રાહક માહિતી"
+              icon={Users}
+              color="from-cyan-500 to-blue-500"
+              count={stats.totalClients}
+            />
+            <QuickAccessCard
+              to="/clients"
+              title="ગ્રાહકો"
+              subtitle="ગ્રાહક વ્યવસ્થાપન"
+              icon={Users}
+              color="from-blue-500 to-indigo-500"
+              count={stats.totalClients}
+            />
           </div>
         </div>
-      )}
 
-      {/* Recent Activity Feed - Moved to bottom */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-blue-600" />
-          તાજેતરની પ્રવૃત્તિ
-        </h2>
-        
-        {recentActivity.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-sm">કોઈ તાજેતરની પ્રવૃત્તિ નથી</p>
-            <p className="text-xs mt-1">નવું ચલણ બનાવવા માટે શરૂ કરો</p>
+        {/* Recent Activity Feed - Blue Theme */}
+        <div className="overflow-hidden bg-white border-2 border-blue-100 shadow-lg rounded-xl">
+          <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-white">
+              <Activity className="w-4 h-4" />
+              તાજેતરની પ્રવૃત્તિ
+            </h2>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {recentActivity.map((activity, index) => (
-              <motion.div
-                key={`${activity.type}-${activity.id}`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${
-                    activity.type === 'udhar' 
-                      ? 'bg-green-100 text-green-600' 
-                      : 'bg-blue-100 text-blue-600'
-                  }`}>
-                    {activity.type === 'udhar' ? (
-                      <FileText className="w-4 h-4" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">
-                      #{activity.challan_number}
-                    </p>
-                    <p className="text-xs text-gray-600">{activity.client_name}</p>
-                  </div>
+          
+          <div className="p-3">
+            {recentActivity.length === 0 ? (
+              <div className="py-8 text-center text-gray-500">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r from-blue-200 to-indigo-200">
+                  <FileText className="w-6 h-6 text-blue-400" />
                 </div>
-                <div className="text-right">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    activity.status === 'active' 
-                      ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-green-100 text-green-800'
-                  }`}>
-                    {activity.status === 'active' ? 'ચલતી છે' : 'પરત'}
-                  </span>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {getTimeAgo(activity.created_at)}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-            
-            <Link
-              to="/challans"
-              className="block text-center py-3 text-blue-600 hover:text-blue-700 font-medium text-sm border-t border-gray-200 mt-4 pt-4"
-            >
-              બધી પ્રવૃત્તિ જુઓ
-              <ArrowRight className="w-4 h-4 inline ml-1" />
-            </Link>
+                <p className="text-sm font-medium text-gray-700">કોઈ તાજેતરની પ્રવૃત્તિ નથી</p>
+                <p className="mt-1 text-xs text-blue-600">નવું ચલણ બનાવવા માટે શરૂ કરો</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentActivity.map((activity, index) => (
+                  <motion.div
+                    key={`${activity.type}-${activity.id}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center justify-between p-3 transition-all duration-200 border border-blue-200 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-full shadow-sm ${
+                        activity.type === 'udhar' 
+                          ? 'bg-gradient-to-r from-red-100 to-orange-100 text-red-600 border border-red-200' 
+                          : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-600 border border-green-200'
+                      }`}>
+                        {activity.type === 'udhar' ? (
+                          <FileText className="w-3 h-3" />
+                        ) : (
+                          <CheckCircle className="w-3 h-3" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          #{activity.challan_number}
+                        </p>
+                        <p className="text-xs text-blue-600">{activity.client_name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        activity.status === 'active' 
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200' 
+                          : 'bg-green-100 text-green-800 border border-green-200'
+                      }`}>
+                        {activity.status === 'active' ? 'ચાલુ' : 'પરત'}
+                      </span>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {getTimeAgo(activity.created_at)}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+                
+                <Link
+                  to="/challans"
+                  className="block py-3 pt-4 mt-4 text-sm font-medium text-center text-blue-600 transition-all duration-200 border-t-2 border-blue-100 rounded-lg hover:text-blue-700 hover:bg-blue-50"
+                >
+                  બધી પ્રવૃત્તિ જુઓ
+                  <ArrowRight className="inline w-3 h-3 ml-1" />
+                </Link>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Floating Action Button for Mobile */}
-      <div className="fixed bottom-20 right-4 z-40 md:hidden">
-        <Link
-          to="/issue"
-          className="bg-green-600 hover:bg-green-700 text-white rounded-full p-4 shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
-        >
-          <Plus className="w-6 h-6" />
-        </Link>
+        {/* Floating Action Button - Blue Theme */}
+        <div className="fixed z-40 bottom-20 right-4 md:hidden">
+          <Link
+            to="/issue"
+            className="flex items-center justify-center p-4 text-white transition-all duration-200 border-2 border-blue-300 rounded-full shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-110"
+          >
+            <Plus className="w-6 h-6" />
+          </Link>
+        </div>
       </div>
     </div>
   );
 }
 
-// New component for metric cards
-interface MetricCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ComponentType<any>;
-  color: string;
-}
-
-function MetricCard({ title, value, icon: Icon, color }: MetricCardProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className={`bg-gradient-to-br ${color} rounded-xl p-4 text-white min-w-[140px] shadow-lg`}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <Icon className="w-6 h-6 text-white opacity-80" />
-        <span className="text-xl font-bold">{value}</span>
-      </div>
-      <p className="text-sm text-white opacity-90 font-medium">{title}</p>
-    </motion.div>
-  );
-}
-
-// New component for quick access cards
+// Enhanced Quick Access Card Component
 interface QuickAccessCardProps {
   to: string;
   title: string;
   subtitle: string;
   icon: React.ComponentType<any>;
   color: string;
+  count: number;
 }
 
-function QuickAccessCard({ to, title, subtitle, icon: Icon, color }: QuickAccessCardProps) {
+function QuickAccessCard({ to, title, subtitle, icon: Icon, color, count }: QuickAccessCardProps) {
   return (
     <Link
       to={to}
-      className={`bg-gradient-to-br ${color} text-white p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:scale-105 transition-all duration-200 min-h-[100px] shadow-lg`}
+      className={`bg-gradient-to-br ${color} text-white p-4 rounded-xl hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl border border-white/20`}
     >
-      <Icon className="w-8 h-8" />
-      <div className="text-center">
-        <div className="text-sm font-bold">{title}</div>
+      <div className="flex items-center justify-between mb-2">
+        <Icon className="w-6 h-6" />
+        <div className="bg-white/20 rounded-full px-2 py-0.5">
+          <span className="text-xs font-bold">{count}</span>
+        </div>
+      </div>
+      <div>
+        <div className="mb-1 text-sm font-bold">{title}</div>
         <div className="text-xs opacity-90">{subtitle}</div>
       </div>
     </Link>

@@ -499,6 +499,9 @@ function AllSizesActivityTable({ ledger, onDownloadChallan, downloading }: AllSi
                 <th className="px-1 py-1.5 text-center font-bold min-w-[60px] border-l border-blue-400">
                   <div className="text-xs">તારીખ</div>
                 </th>
+                <th className="px-1 py-1.5 text-center font-bold min-w-[60px] border-l border-blue-400">
+                  <div className="text-xs">કુલ</div>
+                </th>
                 {/* CHANGED: Show ALL plate sizes headers */}
                 {allPlateSizes.map(size => (
                   <th key={size} className="px-1 py-1.5 text-center font-bold min-w-[50px] border-l border-blue-400">
@@ -518,6 +521,9 @@ function AllSizesActivityTable({ ledger, onDownloadChallan, downloading }: AllSi
                 </td>
                 <td className="px-1 py-1.5 text-center border-l border-blue-200">
                   <div className="text-xs font-semibold text-blue-700">-</div>
+                </td>
+                <td className="px-1 py-1.5 text-center border-l border-blue-200">
+                  <div className="text-xs font-semibold text-blue-700">{ledger.plate_balances.reduce((sum, balance) => sum + Math.abs(balance.outstanding), 0)}</div>
                 </td>
                 {/* CHANGED: Show ALL plate sizes, even blank ones */}
                 {allPlateSizes.map(size => {
@@ -572,6 +578,12 @@ function AllSizesActivityTable({ ledger, onDownloadChallan, downloading }: AllSi
                           const month = (d.getMonth() + 1).toString().padStart(2, '0');
                           return `${day}/${month}`;
                         })()}
+                      </div>
+                    </td>
+
+                    <td className="px-1 py-0.5 text-center border-l border-blue-100">
+                      <div className="text-xs font-medium text-blue-600">
+                        {transaction.items.reduce((sum, item) => sum + item.quantity, 0)}
                       </div>
                     </td>
                     

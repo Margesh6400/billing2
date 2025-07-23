@@ -32,6 +32,7 @@ interface TemplateCoordinates {
   quantity_x: number;
   notes_x: number;
   total: { x: number; y: number };
+  second_total: { x: number; y: number };
 }
 
 const TEMPLATES = {
@@ -53,7 +54,8 @@ const COORDINATES: Record<'issue' | 'return', TemplateCoordinates> = {
     plate_size_x: 220,
     quantity_x: 740,    // Increased spacing for quantity column
     notes_x: 1190,      // Increased spacing for notes column
-    total: { x: 700, y: 2750 }
+    total: { x: 700, y: 2750 },
+    second_total: { x: 1420, y: 3180 } // Added second total 100px below
   },
   return: {
     challan_number: { x: 520, y: 800 },
@@ -67,7 +69,8 @@ const COORDINATES: Record<'issue' | 'return', TemplateCoordinates> = {
     plate_size_x: 220,
     quantity_x: 740,    // Increased spacing for quantity column
     notes_x: 1190,      // Increased spacing for notes column
-    total: { x: 700, y: 2750 }
+    total: { x: 700, y: 2750 },
+    second_total: { x: 700, y: 2850 } // Added second total 100px below
   }
 };
 
@@ -232,12 +235,23 @@ function renderTotal(
   data: ChallanData, 
   coords: TemplateCoordinates
 ) {
+  // Render the main total
   renderHighContrastText(
     ctx,
     data.total_quantity.toString(),
     coords.total.x,
     coords.total.y,
     60,  // Further increased font size
+    'bold'
+  );
+
+  // Render the second total (100 + current total)
+  renderHighContrastText(
+    ctx,
+    (data.total_quantity).toString(),
+    coords.second_total.x,
+    coords.second_total.y,
+    60,
     'bold'
   );
 }

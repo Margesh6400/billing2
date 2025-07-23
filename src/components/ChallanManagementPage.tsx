@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
-import { Download, Eye, Search, ChevronDown, ChevronUp, Calendar, User, Hash, FileText, RotateCcw, Edit, Save, X, Trash2 } from 'lucide-react';
+import { Download, Eye, Search, ChevronDown, ChevronUp, Calendar, User, Hash, FileText, RotateCcw, Edit, Save, X, Trash2, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { T, useTranslation } from '../contexts/LanguageContext';
@@ -212,7 +212,7 @@ export function ChallanManagementPage() {
       }
     } catch (error) {
       console.error('Error fetching challan details:', error);
-      alert('Error loading challan details.');
+      alert('ચલણ વિગતો લોડ કરવામાં ભૂલ.');
     }
   };
 
@@ -301,10 +301,10 @@ export function ChallanManagementPage() {
 
       setEditingChallan(null);
       await fetchChallans();
-      alert('Challan updated successfully!');
+      alert('ચલણ સફળતાપૂર્વક અપડેટ થયું!');
     } catch (error) {
       console.error('Error updating challan:', error);
-      alert('Error updating challan. Please try again.');
+      alert('ચલણ અપડેટ કરવામાં ભૂલ. કૃપા કરીને ફરી પ્રયત્ન કરો.');
     } finally {
       setEditLoading(false);
     }
@@ -313,7 +313,7 @@ export function ChallanManagementPage() {
   const handleDeleteChallan = async () => {
     if (!editingChallan) return;
 
-    const confirmDelete = confirm(`Are you sure you want to delete this ${editingChallan.type} challan? This action cannot be undone.`);
+    const confirmDelete = confirm(`શું તમે ખરેખર આ ${editingChallan.type} ચલણ ડિલીટ કરવા માંગો છો? આ ક્રિયા પૂર્વવત્ કરી શકાશે નહીં.`);
     if (!confirmDelete) return;
 
     setEditLoading(true);
@@ -336,10 +336,10 @@ export function ChallanManagementPage() {
 
       setEditingChallan(null);
       await fetchChallans();
-      alert('Challan deleted successfully!');
+      alert('ચલણ સફળતાપૂર્વક ડિલીટ થયું!');
     } catch (error) {
       console.error('Error deleting challan:', error);
-      alert('Error deleting challan. Please try again.');
+      alert('ચલણ ડિલીટ કરવામાં ભૂલ. કૃપા કરીને ફરી પ્રયત્ન કરો.');
     } finally {
       setEditLoading(false);
     }
@@ -390,7 +390,7 @@ export function ChallanManagementPage() {
       setChallanData(null);
     } catch (error) {
       console.error('Error downloading challan:', error);
-      alert('Error downloading challan. Please try again.');
+      alert('ચલણ ડાઉનલોડ કરવામાં ભૂલ. કૃપા કરીને ફરી પ્રયત્ન કરો.');
     } finally {
       setDownloading(null);
     }
@@ -399,13 +399,13 @@ export function ChallanManagementPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border border-green-200';
       case 'partial':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
       case 'active':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border border-blue-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
   };
 
@@ -434,7 +434,7 @@ export function ChallanManagementPage() {
   const currentChallans = activeTab === 'udhar' ? filteredUdharChallans : filteredJamaChallans;
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="min-h-screen pb-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
       {/* Hidden Printable Challan */}
       <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
         {challanData && (
@@ -444,298 +444,294 @@ export function ChallanManagementPage() {
         )}
       </div>
 
-      {/* Header */}
-      <div className="text-center pt-2">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">
-          <T>Challan Management</T>
-        </h1>
-        <p className="text-sm text-gray-600">ચલણ વ્યવસ્થાપન - Manage all challans</p>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1">
-        <div className="grid grid-cols-2 gap-1">
-          <button
-            onClick={() => setActiveTab('udhar')}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
-              activeTab === 'udhar'
-                ? 'bg-green-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <FileText className="w-5 h-5" />
-            <span className="text-sm">
-              {language === 'gu' ? 'ઉધાર ચલણ' : 'Udhar Challans'}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab('jama')}
-            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
-              activeTab === 'jama'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <RotateCcw className="w-5 h-5" />
-            <span className="text-sm">
-              {language === 'gu' ? 'જમા ચલણ' : 'Jama Challans'}
-            </span>
-          </button>
+      <div className="p-3 space-y-4">
+        {/* Blue Themed Header */}
+        <div className="pt-2 text-center">
+          <div className="inline-flex items-center justify-center w-10 h-10 mb-2 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
+            <BookOpen className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="mb-1 text-base font-bold text-gray-900">ચલણ વ્યવસ્થાપન</h1>
+          <p className="text-xs text-blue-600">બધા ચલણોનું સંચાલન</p>
         </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder={language === 'gu' ? 'ચલણ નંબર, ગ્રાહક અથવા તારીખ શોધો...' : 'Search by challan number, client or date...'}
-          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-        />
-      </div>
+        {/* Blue Themed Tab Navigation */}
+        <div className="p-2 bg-white border-2 border-blue-100 shadow-lg rounded-xl">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setActiveTab('udhar')}
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                activeTab === 'udhar'
+                  ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg transform scale-105'
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>ઉધાર ચલણ</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('jama')}
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                activeTab === 'jama'
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg transform scale-105'
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>જમા ચલણ</span>
+            </button>
+          </div>
+        </div>
 
-      {/* Challans List */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-3"
-        >
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-32 bg-gray-100 rounded-lg"></div>
-                </div>
-              ))}
-            </div>
-          ) : currentChallans.length === 0 ? (
-            <div className="text-center py-12">
-              <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
-                activeTab === 'udhar' ? 'bg-green-100' : 'bg-blue-100'
-              }`}>
-                {activeTab === 'udhar' ? (
-                  <FileText className={`w-8 h-8 ${activeTab === 'udhar' ? 'text-green-600' : 'text-blue-600'}`} />
-                ) : (
-                  <RotateCcw className={`w-8 h-8 ${activeTab === 'udhar' ? 'text-green-600' : 'text-blue-600'}`} />
-                )}
+        {/* Blue Themed Search Bar */}
+        <div className="relative">
+          <Search className="absolute w-4 h-4 text-blue-400 -translate-y-1/2 left-3 top-1/2" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="ચલણ નંબર, ગ્રાહક અથવા તારીખ શોધો..."
+            className="w-full py-2 pl-10 pr-3 text-sm transition-all duration-200 border-2 border-blue-200 rounded-lg focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+          />
+        </div>
+
+        {/* Challans List */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-3"
+          >
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="p-3 bg-white border border-blue-100 shadow-sm rounded-xl animate-pulse">
+                    <div className="w-2/3 h-4 mb-2 bg-blue-200 rounded"></div>
+                    <div className="w-1/2 h-3 bg-blue-200 rounded"></div>
+                  </div>
+                ))}
               </div>
-              <p className="text-gray-500 text-lg font-medium mb-2">
-                {activeTab === 'udhar' 
-                  ? (language === 'gu' ? 'કોઈ ઉધાર ચલણ મળ્યું નથી' : 'No Udhar challans found')
-                  : (language === 'gu' ? 'કોઈ જમા ચલણ મળ્યું નથી' : 'No Jama challans found')
-                }
-              </p>
-              <p className="text-gray-400 text-sm">
-                {searchTerm 
-                  ? (language === 'gu' ? 'શોધ માપદંડ બદલીને ફરી પ્રયાસ કરો' : 'Try changing your search criteria')
-                  : (language === 'gu' ? 'નવું ચલણ બનાવવા માટે શરૂ કરો' : 'Start by creating a new challan')
-                }
-              </p>
-            </div>
-          ) : (
-            currentChallans.map((challan) => (
-              <motion.div
-                key={challan.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
-              >
-                {/* Challan Header */}
-                <div 
-                  className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => setExpandedChallan(expandedChallan === challan.id ? null : challan.id)}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Hash className="w-4 h-4 text-gray-500" />
-                        <span className="font-semibold text-gray-900">
-                          {activeTab === 'udhar' 
-                            ? (challan as UdharChallan).challan_number
-                            : (challan as JamaChallan).return_challan_number
-                          }
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          {format(new Date(
-                            activeTab === 'udhar' 
-                              ? (challan as UdharChallan).challan_date
-                              : (challan as JamaChallan).return_date
-                          ), 'dd/MM/yyyy')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <User className="w-4 h-4" />
-                        <span>{challan.client.name}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      {activeTab === 'udhar' && (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor((challan as UdharChallan).status)}`}>
-                          {getStatusText((challan as UdharChallan).status)}
-                        </span>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-600">
-                          {challan.total_plates} {language === 'gu' ? 'પ્લેટ્સ' : 'plates'}
-                        </span>
-                        {expandedChallan === challan.id ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditChallan(challan, activeTab);
-                      }}
-                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setExpandedChallan(expandedChallan === challan.id ? null : challan.id);
-                      }}
-                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <T>View</T>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(challan, activeTab);
-                      }}
-                      disabled={downloading === challan.id}
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                        activeTab === 'udhar'
-                          ? 'bg-green-600 hover:bg-green-700 text-white'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      } disabled:opacity-50`}
-                    >
-                      <Download className="w-4 h-4" />
-                      {downloading === challan.id ? (
-                        language === 'gu' ? 'ડાઉનલોડ થઈ રહ્યું છે...' : 'Downloading...'
-                      ) : (
-                        <T>Download</T>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Expanded Details */}
-                <AnimatePresence>
-                  {expandedChallan === challan.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-gray-200 bg-gray-50 overflow-hidden"
-                    >
-                      <div className="p-4 space-y-4">
-                        {/* Client Details */}
-                        <div className="bg-white rounded-lg p-3">
-                          <h4 className="font-medium text-gray-900 mb-2">
-                            {language === 'gu' ? 'ગ્રાહક વિગતો' : 'Client Details'}
-                          </h4>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <span className="text-gray-500">{language === 'gu' ? 'ID:' : 'ID:'}</span>
-                              <span className="ml-1 font-medium">{challan.client.id}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">{language === 'gu' ? 'સાઇટ:' : 'Site:'}</span>
-                              <span className="ml-1 font-medium">{challan.client.site}</span>
-                            </div>
-                            <div className="col-span-2">
-                              <span className="text-gray-500">{language === 'gu' ? 'મોબાઇલ:' : 'Mobile:'}</span>
-                              <span className="ml-1 font-medium">{challan.client.mobile_number}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Plate Details */}
-                        <div className="bg-white rounded-lg p-3">
-                          <h4 className="font-medium text-gray-900 mb-2">
-                            {language === 'gu' ? 'પ્લેટ વિગતો' : 'Plate Details'}
-                          </h4>
-                          <div className="space-y-2">
-                            {activeTab === 'udhar' 
-                              ? (challan as UdharChallan).challan_items.map((item, index) => (
-                                  <div key={index} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-b-0">
-                                    <span className="font-medium">{item.plate_size}</span>
-                                    <div className="text-right">
-                                      <span className="text-green-600 font-medium">{item.borrowed_quantity}</span>
-                                      {item.partner_stock_notes && (
-                                        <div className="text-xs text-gray-500 mt-1">{item.partner_stock_notes}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))
-                              : (challan as JamaChallan).return_line_items.map((item, index) => (
-                                  <div key={index} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-b-0">
-                                    <span className="font-medium">{item.plate_size}</span>
-                                    <div className="text-right">
-                                      <span className="text-blue-600 font-medium">{item.returned_quantity}</span>
-                                      {item.damage_notes && (
-                                        <div className="text-xs text-gray-500 mt-1">{item.damage_notes}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
+            ) : currentChallans.length === 0 ? (
+              <div className="py-12 text-center bg-white border-2 border-blue-100 shadow-lg rounded-xl">
+                <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+                  activeTab === 'udhar' ? 'bg-red-100' : 'bg-green-100'
+                }`}>
+                  {activeTab === 'udhar' ? (
+                    <FileText className="w-8 h-8 text-red-600" />
+                  ) : (
+                    <RotateCcw className="w-8 h-8 text-green-600" />
                   )}
-                </AnimatePresence>
-              </motion.div>
-            ))
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Edit Modal */}
-      {editingChallan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Edit {editingChallan.type === 'udhar' ? 'Udhar' : 'Jama'} Challan
-                </h2>
-                <button
-                  onClick={() => setEditingChallan(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                </div>
+                <p className="mb-1 font-semibold text-gray-700">
+                  {activeTab === 'udhar' 
+                    ? 'કોઈ ઉધાર ચલણ મળ્યું નથી' 
+                    : 'કોઈ જમા ચલણ મળ્યું નથી'
+                  }
+                </p>
+                <p className="text-xs text-blue-600">
+                  {searchTerm 
+                    ? 'શોધ માપદંડ બદલીને ફરી પ્રયાસ કરો' 
+                    : 'નવું ચલણ બનાવવા માટે શરૂ કરો'
+                  }
+                </p>
+              </div>
+            ) : (
+              currentChallans.map((challan) => (
+                <motion.div
+                  key={challan.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="overflow-hidden transition-all duration-200 bg-white border-2 border-blue-100 shadow-lg rounded-xl hover:shadow-xl hover:border-blue-200"
                 >
-                  <X className="w-5 h-5" />
-                </button>
+                  {/* Challan Header */}
+                  <div 
+                    className="p-3 transition-colors cursor-pointer hover:bg-blue-25"
+                    onClick={() => setExpandedChallan(expandedChallan === challan.id ? null : challan.id)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500">
+                            <Hash className="w-3 h-3 text-white" />
+                          </div>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {activeTab === 'udhar' 
+                              ? (challan as UdharChallan).challan_number
+                              : (challan as JamaChallan).return_challan_number
+                            }
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1 text-xs text-blue-600">
+                          <Calendar className="w-3 h-3" />
+                          <span>
+                            {format(new Date(
+                              activeTab === 'udhar' 
+                                ? (challan as UdharChallan).challan_date
+                                : (challan as JamaChallan).return_date
+                            ), 'dd/MM/yyyy')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-blue-600">
+                          <User className="w-3 h-3" />
+                          <span>{challan.client.name}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        {activeTab === 'udhar' && (
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor((challan as UdharChallan).status)}`}>
+                            {getStatusText((challan as UdharChallan).status)}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                            {challan.total_plates} પ્લેટ્સ
+                          </span>
+                          <div className="flex items-center justify-center w-5 h-5 bg-blue-100 rounded-full">
+                            {expandedChallan === challan.id ? (
+                              <ChevronUp className="w-3 h-3 text-blue-600" />
+                            ) : (
+                              <ChevronDown className="w-3 h-3 text-blue-600" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditChallan(challan, activeTab);
+                        }}
+                        className="flex items-center justify-center flex-1 gap-1 px-2 py-2 text-xs font-medium text-blue-700 transition-colors bg-blue-100 rounded-lg hover:bg-blue-200"
+                      >
+                        <Edit className="w-3 h-3" />
+                        એડિટ
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedChallan(expandedChallan === challan.id ? null : challan.id);
+                        }}
+                        className="flex items-center justify-center flex-1 gap-1 px-2 py-2 text-xs font-medium text-blue-700 transition-colors bg-blue-100 rounded-lg hover:bg-blue-200"
+                      >
+                        <Eye className="w-3 h-3" />
+                        જુઓ
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(challan, activeTab);
+                        }}
+                        disabled={downloading === challan.id}
+                        className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
+                          activeTab === 'udhar'
+                            ? 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white'
+                            : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white'
+                        } disabled:opacity-50`}
+                      >
+                        <Download className="w-3 h-3" />
+                        {downloading === challan.id ? 'લોડિંગ...' : 'ડાઉનલોડ'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expanded Details */}
+                  <AnimatePresence>
+                    {expandedChallan === challan.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden border-t-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50"
+                      >
+                        <div className="p-3 space-y-3">
+                          {/* Client Details */}
+                          <div className="p-3 bg-white border border-blue-200 rounded-lg">
+                            <h4 className="mb-2 text-sm font-medium text-blue-900">ગ્રાહક વિગતો</h4>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div>
+                                <span className="text-blue-600">ID:</span>
+                                <span className="ml-1 font-medium text-gray-900">{challan.client.id}</span>
+                              </div>
+                              <div>
+                                <span className="text-blue-600">સાઇટ:</span>
+                                <span className="ml-1 font-medium text-gray-900">{challan.client.site}</span>
+                              </div>
+                              <div className="col-span-2">
+                                <span className="text-blue-600">મોબાઇલ:</span>
+                                <span className="ml-1 font-medium text-gray-900">{challan.client.mobile_number}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Plate Details */}
+                          <div className="p-3 bg-white border border-blue-200 rounded-lg">
+                            <h4 className="mb-2 text-sm font-medium text-blue-900">પ્લેટ વિગતો</h4>
+                            <div className="space-y-2">
+                              {activeTab === 'udhar' 
+                                ? (challan as UdharChallan).challan_items.map((item, index) => (
+                                    <div key={index} className="flex items-center justify-between py-1 border-b border-blue-100 last:border-b-0">
+                                      <span className="text-xs font-medium text-gray-900">{item.plate_size}</span>
+                                      <div className="text-right">
+                                        <span className="text-sm font-bold text-red-600">{item.borrowed_quantity}</span>
+                                        {item.partner_stock_notes && (
+                                          <div className="mt-1 text-xs text-blue-500">{item.partner_stock_notes}</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))
+                                : (challan as JamaChallan).return_line_items.map((item, index) => (
+                                    <div key={index} className="flex items-center justify-between py-1 border-b border-blue-100 last:border-b-0">
+                                      <span className="text-xs font-medium text-gray-900">{item.plate_size}</span>
+                                      <div className="text-right">
+                                        <span className="text-sm font-bold text-green-600">{item.returned_quantity}</span>
+                                        {item.damage_notes && (
+                                          <div className="mt-1 text-xs text-blue-500">{item.damage_notes}</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Blue Themed Edit Modal */}
+        {editingChallan && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-blue-900/30 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-4 border-blue-200">
+              <div className="p-4 text-white bg-gradient-to-r from-blue-600 to-indigo-600">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">
+                    {editingChallan.type === 'udhar' ? 'ઉધાર' : 'જમા'} ચલણ એડિટ કરો
+                  </h2>
+                  <button
+                    onClick={() => setEditingChallan(null)}
+                    className="p-2 transition-colors rounded-lg hover:bg-blue-500/20"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="p-4 space-y-4">
                 {/* Basic Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Challan Number
+                    <label className="block mb-1 text-sm font-medium text-blue-700">
+                      ચલણ નંબર
                     </label>
                     <input
                       type="text"
@@ -744,12 +740,12 @@ export function ChallanManagementPage() {
                         ...editingChallan,
                         challan_number: e.target.value
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date
+                    <label className="block mb-1 text-sm font-medium text-blue-700">
+                      તારીખ
                     </label>
                     <input
                       type="date"
@@ -758,15 +754,15 @@ export function ChallanManagementPage() {
                         ...editingChallan,
                         date: e.target.value
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
                     />
                   </div>
                 </div>
 
                 {/* Client Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Client
+                  <label className="block mb-1 text-sm font-medium text-blue-700">
+                    ગ્રાહક
                   </label>
                   <select
                     value={editingChallan.client_id}
@@ -774,7 +770,7 @@ export function ChallanManagementPage() {
                       ...editingChallan,
                       client_id: e.target.value
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
                   >
                     {clients.map(client => (
                       <option key={client.id} value={client.id}>
@@ -786,13 +782,13 @@ export function ChallanManagementPage() {
 
                 {/* Plate Quantities */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Plate Quantities
+                  <label className="block mb-2 text-sm font-medium text-blue-700">
+                    પ્લેટ માત્રા
                   </label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                     {PLATE_SIZES.map(size => (
-                      <div key={size} className="border border-gray-200 rounded-lg p-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <div key={size} className="p-2 border-2 border-blue-200 rounded-lg">
+                        <label className="block mb-1 text-xs font-medium text-blue-700">
                           {size}
                         </label>
                         <input
@@ -806,7 +802,7 @@ export function ChallanManagementPage() {
                               [size]: parseInt(e.target.value) || 0
                             }
                           })}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                          className="w-full px-1 py-1 text-xs text-center border border-blue-300 rounded focus:ring-1 focus:ring-blue-200 focus:border-blue-500"
                           placeholder="0"
                         />
                       </div>
@@ -816,8 +812,8 @@ export function ChallanManagementPage() {
 
                 {/* Note */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    નોંધ (Note)
+                  <label className="block mb-1 text-sm font-medium text-blue-700">
+                    નોંધ
                   </label>
                   <textarea
                     value={editingChallan.note}
@@ -825,47 +821,47 @@ export function ChallanManagementPage() {
                       ...editingChallan,
                       note: e.target.value
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    className="w-full px-3 py-2 text-sm border-2 border-blue-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
                     rows={3}
-                    placeholder="Enter any notes for this challan..."
+                    placeholder="આ ચલણ માટે કોઈ નોંધ દાખલ કરો..."
                   />
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                <div className="flex flex-col gap-2 pt-4 border-t-2 border-blue-100 sm:flex-row">
                   <button
                     onClick={handleSaveEdit}
                     disabled={editLoading}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex items-center justify-center flex-1 gap-2 px-3 py-2 text-sm font-medium text-white transition-colors rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50"
                   >
                     {editLoading ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white rounded-full border-t-transparent animate-spin" />
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    Save Changes
+                    સેવ કરો
                   </button>
                   <button
                     onClick={handleDeleteChallan}
                     disabled={editLoading}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex items-center justify-center flex-1 gap-2 px-3 py-2 text-sm font-medium text-white transition-colors rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:opacity-50"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete Challan
+                    ડિલીટ કરો
                   </button>
                   <button
                     onClick={() => setEditingChallan(null)}
                     disabled={editLoading}
-                    className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    className="flex-1 px-3 py-2 text-sm font-medium text-white transition-colors bg-gray-500 rounded-lg hover:bg-gray-600 disabled:opacity-50"
                   >
-                    Cancel
+                    રદ કરો
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
