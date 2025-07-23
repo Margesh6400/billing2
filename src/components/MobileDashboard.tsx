@@ -213,30 +213,30 @@ export function MobileDashboard() {
   const dateInfo = getGujaratiDate();
 
   return (
-    <div className="min-h-screen pb-24 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
-      <div className="p-3 space-y-4">
+    <div className="min-h-screen pb-28 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
+      <div className="p-4 space-y-6">
         {/* Enhanced Date and Time Header */}
-        <div className="pt-4 text-center">
-          <div className="p-4 mx-2 bg-white border-2 border-blue-100 shadow-lg rounded-2xl">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600">
-                <Calendar className="w-4 h-4 text-white" />
+        <div className="pt-6 text-center">
+          <div className="p-6 mx-2 bg-white border-2 border-blue-100 shadow-lg rounded-3xl">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600">
+                <Calendar className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-lg font-bold text-blue-900">આજનો દિવસ</h1>
+              <h1 className="text-2xl font-bold text-blue-900">આજનો દિવસ</h1>
             </div>
             
-            <div className="p-3 border border-blue-200 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl">
+            <div className="p-4 border border-blue-200 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl">
               <div className="text-center">
-                <div className="mb-1 text-base font-bold text-blue-800">
+                <div className="mb-2 text-xl font-bold text-blue-800">
                   {dateInfo.day}
                 </div>
-                <div className="flex items-center justify-center gap-2 text-sm text-blue-700">
+                <div className="flex items-center justify-center gap-3 text-base text-blue-700">
                   <span className="font-semibold">{dateInfo.date}</span>
                   <span>{dateInfo.month}</span>
                   <span className="font-semibold">{dateInfo.year}</span>
                 </div>
-                <div className="flex items-center justify-center gap-1 mt-2 text-xs text-blue-600">
-                  <Clock className="w-3 h-3" />
+                <div className="flex items-center justify-center gap-2 mt-3 text-sm text-blue-600">
+                  <Clock className="w-4 h-4" />
                   <span className="font-medium">{dateInfo.time}</span>
                 </div>
               </div>
@@ -246,13 +246,13 @@ export function MobileDashboard() {
 
         {/* Quick Access Cards - Blue Theme */}
         <div>
-          <h2 className="flex items-center gap-2 px-1 mb-3 text-base font-semibold text-blue-900">
-            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500">
-              <Home className="w-3 h-3 text-white" />
+          <h2 className="flex items-center gap-3 px-2 mb-4 text-xl font-semibold text-blue-900">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500">
+              <Home className="w-5 h-5 text-white" />
             </div>
             ઝડપી પ્રવેશ
           </h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <QuickAccessCard
               to="/issue"
               title="ઉધાર ચલણ"
@@ -305,61 +305,61 @@ export function MobileDashboard() {
         </div>
 
         {/* Recent Activity Feed - Blue Theme */}
-        <div className="overflow-hidden bg-white border-2 border-blue-100 shadow-lg rounded-xl">
-          <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-white">
-              <Activity className="w-4 h-4" />
+        <div className="overflow-hidden bg-white border-2 border-blue-100 shadow-lg rounded-2xl">
+          <div className="p-4 bg-gradient-to-r from-blue-500 to-indigo-500">
+            <h2 className="flex items-center gap-3 text-lg font-bold text-white">
+              <Activity className="w-6 h-6" />
               તાજેતરની પ્રવૃત્તિ
             </h2>
           </div>
           
-          <div className="p-3">
+          <div className="p-4">
             {recentActivity.length === 0 ? (
-              <div className="py-8 text-center text-gray-500">
-                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r from-blue-200 to-indigo-200">
-                  <FileText className="w-6 h-6 text-blue-400" />
+              <div className="py-12 text-center text-gray-500">
+                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-200 to-indigo-200">
+                  <FileText className="w-8 h-8 text-blue-400" />
                 </div>
-                <p className="text-sm font-medium text-gray-700">કોઈ તાજેતરની પ્રવૃત્તિ નથી</p>
-                <p className="mt-1 text-xs text-blue-600">નવું ચલણ બનાવવા માટે શરૂ કરો</p>
+                <p className="text-lg font-medium text-gray-700">કોઈ તાજેતરની પ્રવૃત્તિ નથી</p>
+                <p className="mt-2 text-sm text-blue-600">નવું ચલણ બનાવવા માટે શરૂ કરો</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {recentActivity.map((activity, index) => (
                   <motion.div
                     key={`${activity.type}-${activity.id}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex items-center justify-between p-3 transition-all duration-200 border border-blue-200 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 hover:shadow-md"
+                    className="flex items-center justify-between p-4 transition-all duration-200 border border-blue-200 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:shadow-md"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       <div className={`p-2 rounded-full shadow-sm ${
                         activity.type === 'udhar' 
                           ? 'bg-gradient-to-r from-red-100 to-orange-100 text-red-600 border border-red-200' 
                           : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-600 border border-green-200'
                       }`}>
                         {activity.type === 'udhar' ? (
-                          <FileText className="w-3 h-3" />
+                          <FileText className="w-4 h-4" />
                         ) : (
-                          <CheckCircle className="w-3 h-3" />
+                          <CheckCircle className="w-4 h-4" />
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-base font-medium text-gray-900">
                           #{activity.challan_number}
                         </p>
-                        <p className="text-xs text-blue-600">{activity.client_name}</p>
+                        <p className="text-sm text-blue-600">{activity.client_name}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                         activity.status === 'active' 
                           ? 'bg-blue-100 text-blue-800 border border-blue-200' 
                           : 'bg-green-100 text-green-800 border border-green-200'
                       }`}>
                         {activity.status === 'active' ? 'ચાલુ' : 'પરત'}
                       </span>
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-sm text-gray-500">
                         {getTimeAgo(activity.created_at)}
                       </p>
                     </div>
@@ -368,10 +368,10 @@ export function MobileDashboard() {
                 
                 <Link
                   to="/challans"
-                  className="block py-3 pt-4 mt-4 text-sm font-medium text-center text-blue-600 transition-all duration-200 border-t-2 border-blue-100 rounded-lg hover:text-blue-700 hover:bg-blue-50"
+                  className="block py-4 pt-6 mt-6 text-base font-medium text-center text-blue-600 transition-all duration-200 border-t-2 border-blue-100 rounded-lg hover:text-blue-700 hover:bg-blue-50"
                 >
                   બધી પ્રવૃત્તિ જુઓ
-                  <ArrowRight className="inline w-3 h-3 ml-1" />
+                  <ArrowRight className="inline w-4 h-4 ml-2" />
                 </Link>
               </div>
             )}
@@ -379,12 +379,12 @@ export function MobileDashboard() {
         </div>
 
         {/* Floating Action Button - Blue Theme */}
-        <div className="fixed z-40 bottom-20 right-4 md:hidden">
+        <div className="fixed z-40 bottom-24 right-6 md:hidden">
           <Link
             to="/issue"
-            className="flex items-center justify-center p-4 text-white transition-all duration-200 border-2 border-blue-300 rounded-full shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-110"
+            className="flex items-center justify-center p-5 text-white transition-all duration-200 border-2 border-blue-300 rounded-full shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-110"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-8 h-8" />
           </Link>
         </div>
       </div>
@@ -406,17 +406,17 @@ function QuickAccessCard({ to, title, subtitle, icon: Icon, color, count }: Quic
   return (
     <Link
       to={to}
-      className={`bg-gradient-to-br ${color} text-white p-4 rounded-xl hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl border border-white/20`}
+      className={`bg-gradient-to-br ${color} text-white p-6 rounded-2xl hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl border border-white/20 min-h-[120px]`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <Icon className="w-6 h-6" />
-        <div className="bg-white/20 rounded-full px-2 py-0.5">
-          <span className="text-xs font-bold">{count}</span>
+      <div className="flex items-center justify-between mb-3">
+        <Icon className="w-8 h-8" />
+        <div className="bg-white/20 rounded-full px-3 py-1">
+          <span className="text-sm font-bold">{count}</span>
         </div>
       </div>
       <div>
-        <div className="mb-1 text-sm font-bold">{title}</div>
-        <div className="text-xs opacity-90">{subtitle}</div>
+        <div className="mb-2 text-base font-bold">{title}</div>
+        <div className="text-sm opacity-90">{subtitle}</div>
       </div>
     </Link>
   );

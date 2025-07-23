@@ -78,28 +78,28 @@ export function MobileNavbar() {
   return (
     <>
       {/* TOP BAR - Blue Theme Gradient */}
-      <header className="fixed top-0 left-0 right-0 z-50 shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 font-noto-gujarati">
-        <div className="flex items-center justify-between h-16 px-4">
+      <header className="fixed top-0 left-0 right-0 z-50 shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 font-noto-gujarati safe-area-top">
+        <div className="flex items-center justify-between h-20 px-6">
           {/* Hamburger Menu Button */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="p-2 rounded-lg hover:bg-blue-500/20 active:bg-blue-500/30 transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center transform hover:scale-105"
+            className="p-3 rounded-xl hover:bg-blue-500/20 active:bg-blue-500/30 transition-all duration-200 min-w-[52px] min-h-[52px] flex items-center justify-center transform hover:scale-105"
             aria-label="Open menu"
           >
-            <Menu className="w-6 h-6 text-white" />
+            <Menu className="w-7 h-7 text-white" />
           </button>
 
           {/* App Title */}
           <div className="text-center">
-            <h1 className="text-xl font-bold leading-tight text-white">
+            <h1 className="text-2xl font-bold leading-tight text-white">
               NO WERE TECH
             </h1>
-            <p className="text-xs text-blue-100">સેન્ટરિંગ પ્લેટ્સ ભાડા</p>
+            <p className="text-sm text-blue-100">સેન્ટરિંગ પ્લેટ્સ ભાડા</p>
           </div>
 
           {/* User Avatar - Enhanced Blue Theme */}
-          <div className="flex items-center justify-center w-10 h-10 border-2 border-blue-300 rounded-full shadow-lg bg-gradient-to-r from-blue-500 to-indigo-500">
-            <span className="text-sm font-semibold text-white">
+          <div className="flex items-center justify-center w-12 h-12 border-2 border-blue-300 rounded-full shadow-lg bg-gradient-to-r from-blue-500 to-indigo-500">
+            <span className="text-base font-semibold text-white">
               {getUserInitials()}
             </span>
           </div>
@@ -118,35 +118,35 @@ export function MobileNavbar() {
           {/* Menu Panel */}
           <div className="absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col border-r-4 border-blue-500">
             {/* Menu Header - Blue Theme */}
-            <div className="flex items-center justify-between p-4 text-white shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
-              <h2 className="text-lg font-semibold">મેનુ</h2>
+            <div className="flex items-center justify-between p-6 text-white shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
+              <h2 className="text-xl font-semibold">મેનુ</h2>
               <button
                 onClick={() => setIsMenuOpen(false)}
-                className="p-2 rounded-lg hover:bg-blue-500/20 transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center transform hover:scale-105"
+                className="p-3 rounded-xl hover:bg-blue-500/20 transition-all duration-200 min-w-[52px] min-h-[52px] flex items-center justify-center transform hover:scale-105"
                 aria-label="Close menu"
               >
-                <X className="w-6 h-6" />
+                <X className="w-7 h-7" />
               </button>
             </div>
 
             {/* User Info Section - Blue Theme */}
-            <div className="flex-shrink-0 p-4 border-b-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-              <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0 p-6 border-b-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="flex items-center space-x-4">
                 {/* User Avatar - Enhanced */}
-                <div className="flex items-center justify-center w-12 h-12 text-lg font-semibold text-white border-2 border-blue-300 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
+                <div className="flex items-center justify-center w-16 h-16 text-xl font-semibold text-white border-2 border-blue-300 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
                   {getUserInitials()}
                 </div>
                 
                 {/* User Details */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-blue-900 truncate">
+                  <p className="text-lg font-semibold text-blue-900 truncate">
                     {user?.user_metadata?.name || 'વપરાશકર્તા'}
                   </p>
                   
                   {/* Email Toggle */}
                   <button
                     onClick={() => setShowUserEmail(!showUserEmail)}
-                    className="block max-w-full mt-1 text-xs font-medium text-left text-blue-600 truncate transition-colors hover:text-blue-800"
+                    className="block max-w-full mt-2 text-sm font-medium text-left text-blue-600 truncate transition-colors hover:text-blue-800"
                   >
                     {showUserEmail ? (
                       <span className="truncate">{user?.email}</span>
@@ -159,38 +159,38 @@ export function MobileNavbar() {
             </div>
 
             {/* Navigation Items - Enhanced Blue Theme */}
-            <nav className="flex-1 py-2 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
+            <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-50">
               {NAVIGATION_ITEMS.map((item) => (
                 <Link
                   key={item.key}
                   to={item.path}
-                  className={`flex items-center space-x-4 px-6 py-3 text-sm font-medium transition-all duration-200 min-h-[52px] mx-2 my-1 rounded-xl ${
+                  className={`flex items-center space-x-4 px-6 py-4 text-base font-medium transition-all duration-200 min-h-[60px] mx-3 my-2 rounded-xl ${
                     isActivePath(item.path)
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105 border-l-4 border-blue-300'
                       : 'text-blue-700 hover:bg-blue-50 hover:text-blue-800 hover:shadow-md hover:scale-102'
                   }`}
                 >
-                  <item.icon className="flex-shrink-0 w-5 h-5" />
+                  <item.icon className="flex-shrink-0 w-6 h-6" />
                   <span className="truncate">{item.label}</span>
                 </Link>
               ))}
             </nav>
 
             {/* Settings & Sign Out - Blue Theme */}
-            <div className="flex-shrink-0 p-4 space-y-2 border-t-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div className="flex-shrink-0 p-6 space-y-3 border-t-2 border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
               <button
                 onClick={() => {/* Add settings logic */}}
-                className="w-full flex items-center space-x-4 px-4 py-3 text-blue-700 hover:bg-blue-100 rounded-xl transition-all duration-200 min-h-[48px] font-medium hover:shadow-md transform hover:scale-105"
+                className="w-full flex items-center space-x-4 px-6 py-4 text-blue-700 hover:bg-blue-100 rounded-xl transition-all duration-200 min-h-[56px] font-medium hover:shadow-md transform hover:scale-105"
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-6 h-6" />
                 સેટિંગ્સ
               </button>
 
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center space-x-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 min-h-[48px] font-medium hover:shadow-md transform hover:scale-105 border border-red-200"
+                className="w-full flex items-center space-x-4 px-6 py-4 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 min-h-[56px] font-medium hover:shadow-md transform hover:scale-105 border border-red-200"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-6 h-6" />
                 સાઇન આઉટ
               </button>
             </div>
@@ -199,13 +199,13 @@ export function MobileNavbar() {
       )}
 
       {/* BOTTOM TAB BAR - Enhanced Blue Theme */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-blue-100 shadow-xl font-noto-gujarati">
-        <div className="grid h-16 grid-cols-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-blue-100 shadow-xl font-noto-gujarati safe-area-bottom">
+        <div className="grid h-20 grid-cols-4 bg-gradient-to-r from-blue-50 to-indigo-50">
           {BOTTOM_NAV_ITEMS.map((item) => (
             <Link
               key={item.key}
               to={item.path}
-              className={`flex flex-col items-center justify-center space-y-1 transition-all duration-200 min-h-[64px] relative ${
+              className={`flex flex-col items-center justify-center space-y-2 transition-all duration-200 min-h-[80px] relative ${
                 isActivePath(item.path)
                   ? 'text-blue-600 bg-gradient-to-t from-blue-100 to-blue-50 scale-105 shadow-lg'
                   : 'text-blue-500 hover:text-blue-700 hover:bg-blue-25 hover:scale-102'
@@ -213,11 +213,11 @@ export function MobileNavbar() {
             >
               {/* Active indicator */}
               {isActivePath(item.path) && (
-                <div className="absolute top-0 w-8 h-1 transform -translate-x-1/2 rounded-b-full left-1/2 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+                <div className="absolute top-0 w-12 h-1.5 transform -translate-x-1/2 rounded-b-full left-1/2 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
               )}
               
-              <item.icon className={`w-5 h-5 ${isActivePath(item.path) ? 'animate-pulse' : ''}`} />
-              <span className={`text-xs font-medium truncate px-1 ${
+              <item.icon className={`w-6 h-6 ${isActivePath(item.path) ? 'animate-pulse' : ''}`} />
+              <span className={`text-sm font-medium truncate px-1 ${
                 isActivePath(item.path) ? 'font-bold' : ''
               }`}>
                 {item.label}
@@ -228,10 +228,10 @@ export function MobileNavbar() {
       </nav>
 
       {/* Top spacing for content */}
-      <div className="h-16" />
+      <div className="h-20" />
       
       {/* Bottom spacing for content */}
-      <div className="h-16" />
+      <div className="h-20" />
     </>
   )
 }
