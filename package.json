@@ -6,8 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:mobile": "vite build --mode mobile",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "mobile:init": "npx cap init",
+    "mobile:add:android": "npx cap add android",
+    "mobile:add:ios": "npx cap add ios",
+    "mobile:sync": "npm run build:mobile && npx cap sync",
+    "mobile:run:android": "npm run mobile:sync && npx cap run android",
+    "mobile:run:ios": "npm run mobile:sync && npx cap run ios",
+    "mobile:build:android": "npm run mobile:sync && npx cap build android",
+    "mobile:build:ios": "npm run mobile:sync && npx cap build ios"
   },
   "dependencies": {
     "@fontsource/noto-sans-gujarati": "^5.2.6",

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NO WERE TECH</string>
+    <string name="title_activity_main">NO WERE TECH - Centering Plates</string>
+    <string name="package_name">com.nowheretech.centeringplates</string>
+    <string name="custom_url_scheme">com.nowheretech.centeringplates</string>
+</resources>
