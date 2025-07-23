@@ -92,22 +92,45 @@ export function MobileReturnPage() {
 
   async function generateNextChallanNumber() {
     try {
+      // Get the most recent return challan number (last one created)
       const { data, error } = await supabase
         .from("returns")
         .select("return_challan_number")
-        .order("id", { ascending: false });
+        .order("id", { ascending: false })
+        .limit(1);
+
       if (error) throw error;
-      let maxNumber = 0;
-      data?.forEach(returnRecord => {
-        const match = returnRecord.return_challan_number.match(/\d+/);
+      
+      let nextNumber = "1"; // Default if no returns exist
+      
+      if (data && data.length > 0) {
+        const lastChallanNumber = data[0].return_challan_number;
+        
+        // Extract prefix and trailing number using regex
+        // This regex finds: (any characters)(trailing digits)
+        const match = lastChallanNumber.match(/^(.*)(\d+)$/);
+        
         if (match) {
-          const num = parseInt(match[0]);
-          if (num > maxNumber) maxNumber = num;
+          const prefix = match[1]; // Characters before number (e.g., "KO", "ABC", or "")
+          const lastNumber = parseInt(match[2]); // The trailing number part
+          const incrementedNumber = lastNumber + 1;
+          
+          // Keep the same number of digits with leading zeros if needed
+          const digitCount = match[2].length;
+          const paddedNumber = incrementedNumber.toString().padStart(digitCount, '0');
+          
+          nextNumber = prefix + paddedNumber;
+        } else {
+          // If no trailing number found, append "1" 
+          nextNumber = lastChallanNumber + "1";
         }
-      });
-      const nextNumber = (maxNumber + 1).toString();
+      }
+      
       setSuggestedChallanNumber(nextNumber);
+      
+      // Auto-fill only if field is empty
       if (!returnChallanNumber) setReturnChallanNumber(nextNumber);
+      
     } catch (error) {
       console.error("Error generating challan number:", error);
       const fallback = "1";
@@ -293,7 +316,7 @@ export function MobileReturnPage() {
       return (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900 text-xs">નવો ગ્રાહક ઉમેરો</h3>
+            <h3 className="text-xs font-medium text-gray-900">નવો ગ્રાહક ઉમેરો</h3>
             <button
               onClick={() => setShowAddForm(false)}
               className="text-gray-500 hover:text-gray-700"
@@ -328,7 +351,7 @@ export function MobileReturnPage() {
 
           <button
             onClick={handleAddClient}
-            className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded font-medium text-xs transition-colors"
+            className="w-full py-2 text-xs font-medium text-white transition-colors bg-green-500 rounded hover:bg-green-600"
           >
             ગ્રાહક ઉમેરો
           </button>
@@ -338,22 +361,8 @@ export function MobileReturnPage() {
 
     return (
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <User className="w-3 h-3 text-green-500" />
-            <h3 className="font-medium text-gray-900 text-xs">ગ્રાહક પસંદ કરો</h3>
-          </div>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-1 text-green-600 hover:text-green-700 text-xs font-medium"
-          >
-            <Plus className="w-3 h-3" />
-            નવો ઉમેરો
-          </button>
-        </div>
-
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3" />
+          <Search className="absolute w-3 h-3 text-gray-400 -translate-y-1/2 left-2 top-1/2" />
           <input
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -363,17 +372,17 @@ export function MobileReturnPage() {
         </div>
 
         {/* ENLARGED CLIENT SEARCH WINDOW */}
-        <div className="max-h-80 overflow-y-auto space-y-1 border border-gray-200 rounded p-1 bg-gray-50">
+        <div className="p-1 space-y-1 overflow-y-auto border border-gray-200 rounded max-h-80 bg-gray-50">
           {loading ? (
-            <div className="text-center py-8">
-              <Loader2 className="w-4 h-4 mx-auto mb-2 animate-spin text-green-500" />
+            <div className="py-8 text-center">
+              <Loader2 className="w-4 h-4 mx-auto mb-2 text-green-500 animate-spin" />
               <p className="text-xs text-gray-500">લોડ થઈ રહ્યું છે...</p>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="py-8 text-center text-gray-500">
               <User className="w-6 h-6 mx-auto mb-2 text-gray-300" />
               <p className="text-xs font-medium">કોઈ ગ્રાહક મળ્યો નથી</p>
-              <p className="text-xs mt-1">શોધ શબ્દ બદલીને પ્રયત્ન કરો</p>
+              <p className="mt-1 text-xs">શોધ શબ્દ બદલીને પ્રયત્ન કરો</p>
             </div>
           ) : (
             filteredClients.map(client => (
@@ -383,10 +392,10 @@ export function MobileReturnPage() {
                   setSelectedClient(client);
                   setShowClientSelector(false);
                 }}
-                className="w-full text-left p-2 bg-white border border-gray-200 rounded hover:border-green-300 hover:bg-green-50 transition-all text-xs shadow-sm hover:shadow-md"
+                className="w-full p-2 text-xs text-left transition-all bg-white border border-gray-200 rounded shadow-sm hover:border-green-300 hover:bg-green-50 hover:shadow-md"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                  <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full shadow-sm bg-gradient-to-r from-green-400 to-emerald-500">
                     {client.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
@@ -401,7 +410,7 @@ export function MobileReturnPage() {
                         {client.site}
                       </span>
                     </div>
-                    <div className="text-xs text-green-600 font-medium">{client.mobile_number}</div>
+                    <div className="text-xs font-medium text-green-600">{client.mobile_number}</div>
                   </div>
                 </div>
               </button>
@@ -413,21 +422,21 @@ export function MobileReturnPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 pb-20">
+    <div className="min-h-screen pb-20 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
       <div className="p-3 space-y-3">
         {/* Compact Header */}
-        <div className="text-center pt-2">
-          <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mb-2 shadow-lg">
+        <div className="pt-2 text-center">
+          <div className="inline-flex items-center justify-center w-10 h-10 mb-2 rounded-full shadow-lg bg-gradient-to-r from-green-500 to-emerald-500">
             <RotateCcw className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-base font-bold text-gray-900 mb-1">જમા ચલણ</h1>
+          <h1 className="mb-1 text-base font-bold text-gray-900">જમા ચલણ</h1>
           <p className="text-xs text-gray-600">પ્લેટ પરત કરો</p>
         </div>
 
         {/* Enhanced Client Selection with Green Theme */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-2">
-            <h2 className="text-xs font-bold text-white flex items-center gap-1">
+        <div className="overflow-hidden bg-white border border-gray-100 rounded-lg shadow-sm">
+          <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500">
+            <h2 className="flex items-center gap-1 text-xs font-bold text-white">
               <User className="w-3 h-3" />
               ગ્રાહક
             </h2>
@@ -438,13 +447,13 @@ export function MobileReturnPage() {
               <CompactClientSelector />
             ) : (
               <div className="space-y-2">
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded p-2 border border-green-200">
+                <div className="p-2 border border-green-200 rounded bg-gradient-to-r from-green-50 to-emerald-50">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                    <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full bg-gradient-to-r from-green-500 to-emerald-500">
                       {selectedClient.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 text-xs">{selectedClient.name}</h3>
+                      <h3 className="text-xs font-bold text-gray-900">{selectedClient.name}</h3>
                       <div className="flex items-center gap-2 text-xs text-gray-600">
                         <span className="flex items-center gap-0.5">
                           <Hash className="w-2 h-2" />
@@ -461,7 +470,7 @@ export function MobileReturnPage() {
                 
                 <button
                   onClick={() => setShowClientSelector(true)}
-                  className="text-green-600 hover:text-green-700 font-medium text-xs"
+                  className="text-xs font-medium text-green-600 hover:text-green-700"
                 >
                   ગ્રાહક બદલવો
                 </button>
@@ -474,23 +483,23 @@ export function MobileReturnPage() {
         {selectedClient && !showClientSelector && (
           <>
             {Object.keys(outstandingPlates).length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="p-6 text-center bg-white border border-gray-100 rounded-lg shadow-sm">
+                <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-r from-gray-200 to-gray-300">
                   <Package className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-700 mb-2">કોઈ બાકી પ્લેટ્સ નથી</h3>
-                <p className="text-sm text-gray-500 mb-3">આ ગ્રાહક પાસે પરત કરવા માટે કોઈ પ્લેટ્સ નથી.</p>
+                <h3 className="mb-2 text-lg font-bold text-gray-700">કોઈ બાકી પ્લેટ્સ નથી</h3>
+                <p className="mb-3 text-sm text-gray-500">આ ગ્રાહક પાસે પરત કરવા માટે કોઈ પ્લેટ્સ નથી.</p>
                 <button
                   onClick={() => setSelectedClient(null)}
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
+                  className="px-4 py-2 text-sm font-medium text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                 >
                   બીજો ગ્રાહક પસંદ કરો
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-2">
-                  <h2 className="text-xs font-bold text-white flex items-center gap-1">
+              <form onSubmit={handleSubmit} className="overflow-hidden bg-white border border-gray-100 rounded-lg shadow-sm">
+                <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500">
+                  <h2 className="flex items-center gap-1 text-xs font-bold text-white">
                     <RotateCcw className="w-3 h-3" />
                     પ્લેટ જમા
                   </h2>
@@ -508,7 +517,7 @@ export function MobileReturnPage() {
                         value={returnChallanNumber}
                         onChange={(e) => handleChallanNumberChange(e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-green-200 focus:border-green-400"
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-green-200 focus:border-green-400"
                         placeholder={suggestedChallanNumber}
                         required
                       />
@@ -523,36 +532,36 @@ export function MobileReturnPage() {
                         value={returnDate}
                         onChange={(e) => setReturnDate(e.target.value)}
                         required
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-green-200 focus:border-green-400"
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-green-200 focus:border-green-400"
                       />
                     </div>
                   </div>
 
                   {/* Compact Table */}
                   <div className="overflow-x-auto">
-                    <table className="w-full text-xs rounded overflow-hidden">
+                    <table className="w-full overflow-hidden text-xs rounded">
                       <thead>
-                        <tr className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-                          <th className="px-1 py-1 text-left font-medium">સાઇઝ</th>
-                          <th className="px-1 py-1 text-center font-medium">બાકી</th>
-                          <th className="px-1 py-1 text-center font-medium">પરત</th>
-                          <th className="px-1 py-1 text-center font-medium">નોંધ</th>
+                        <tr className="text-white bg-gradient-to-r from-green-500 to-emerald-500">
+                          <th className="px-1 py-1 font-medium text-left">સાઇઝ</th>
+                          <th className="px-1 py-1 font-medium text-center">બાકી</th>
+                          <th className="px-1 py-1 font-medium text-center">પરત</th>
+                          <th className="px-1 py-1 font-medium text-center">નોંધ</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {Object.entries(outstandingPlates).map(([size, outstanding], index) => (
+                        {PLATE_SIZES.map((size, index) => (
                           <tr key={size} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
                             <td className="px-1 py-1 font-medium">{size}</td>
                             <td className="px-1 py-1 text-center">
-                              <span className="inline-flex items-center justify-center w-5 h-5 rounded font-bold bg-red-100 text-red-700">
-                                {outstanding}
+                              <span className="inline-flex items-center justify-center w-5 h-5 font-bold text-red-700 bg-red-100 rounded">
+                                {outstandingPlates[size] || 0}
                               </span>
                             </td>
                             <td className="px-1 py-1 text-center">
                               <input
                                 type="number"
                                 min={0}
-                                max={outstanding}
+                                max={outstandingPlates[size] || 0}
                                 value={quantities[size] || ""}
                                 onChange={e => handleQuantityChange(size, e.target.value)}
                                 className="w-10 px-0.5 py-0.5 border border-gray-300 rounded text-center"
@@ -575,7 +584,7 @@ export function MobileReturnPage() {
                   </div>
 
                   {/* Compact Total */}
-                  <div className="bg-green-100 rounded p-2 border border-green-200">
+                  <div className="p-2 bg-green-100 border border-green-200 rounded">
                     <div className="text-center">
                       <span className="text-xs font-medium text-green-800">કુલ પ્લેટ્સ: </span>
                       <span className="text-base font-bold text-green-700">
@@ -588,7 +597,7 @@ export function MobileReturnPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-2 rounded font-medium text-xs transition-all flex items-center justify-center gap-1 disabled:opacity-50"
+                    className="flex items-center justify-center w-full gap-1 py-2 text-xs font-medium text-white transition-all rounded bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50"
                   >
                     {loading ? (
                       <>

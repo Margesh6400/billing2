@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../lib/supabase";
-import { ClientSelector } from "./ClientSelector";
 import { 
   FileText, 
   Package, 
@@ -62,22 +61,45 @@ export function MobileIssueRental() {
 
   async function generateNextChallanNumber() {
     try {
+      // Get the most recent challan number (last one created)
       const { data, error } = await supabase
         .from("challans")
         .select("challan_number")
-        .order("id", { ascending: false });
+        .order("id", { ascending: false })
+        .limit(1);
+
       if (error) throw error;
-      let maxNumber = 0;
-      data?.forEach(challan => {
-        const match = challan.challan_number.match(/\d+/);
+      
+      let nextNumber = "1"; // Default if no challans exist
+      
+      if (data && data.length > 0) {
+        const lastChallanNumber = data[0].challan_number;
+        
+        // Extract prefix and trailing number using regex
+        // This regex finds: (any characters)(trailing digits)
+        const match = lastChallanNumber.match(/^(.*)(\d+)$/);
+        
         if (match) {
-          const num = parseInt(match[0]);
-          if (num > maxNumber) maxNumber = num;
+          const prefix = match[1]; // Characters before number (e.g., "KO", "ABC", or "")
+          const lastNumber = parseInt(match[2]); // The trailing number part
+          const incrementedNumber = lastNumber + 1;
+          
+          // Keep the same number of digits with leading zeros if needed
+          const digitCount = match[2].length;
+          const paddedNumber = incrementedNumber.toString().padStart(digitCount, '0');
+          
+          nextNumber = prefix + paddedNumber;
+        } else {
+          // If no trailing number found, append "1" 
+          nextNumber = lastChallanNumber + "1";
         }
-      });
-      const nextNumber = (maxNumber + 1).toString();
+      }
+      
       setSuggestedChallanNumber(nextNumber);
+      
+      // Auto-fill only if field is empty
       if (!challanNumber) setChallanNumber(nextNumber);
+      
     } catch (error) {
       console.error("Error generating challan number:", error);
       const fallback = "1";
@@ -215,13 +237,14 @@ export function MobileIssueRental() {
     }
   }
 
-  // Enhanced Client Selector Component with Larger Search Window
+  // Enhanced Client Selector Component with Client ID Field
   function CompactClientSelector() {
     const [clients, setClients] = useState<Client[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [newClientData, setNewClientData] = useState({
+      id: "",
       name: "",
       site: "",
       mobile_number: ""
@@ -247,6 +270,10 @@ export function MobileIssueRental() {
     }
 
     async function handleAddClient() {
+      if (!newClientData.id.trim()) {
+        alert("ગ્રાહક ID દાખલ કરો");
+        return;
+      }
       if (!newClientData.name.trim()) {
         alert("ગ્રાહકનું નામ દાખલ કરો");
         return;
@@ -262,12 +289,12 @@ export function MobileIssueRental() {
         if (error) throw error;
 
         setClients(prev => [...prev, data]);
-        setNewClientData({ name: "", site: "", mobile_number: "" });
+        setNewClientData({ id: "", name: "", site: "", mobile_number: "" });
         setShowAddForm(false);
         alert("નવો ગ્રાહક ઉમેરવામાં આવ્યો!");
       } catch (error) {
         console.error("Error adding client:", error);
-        alert("ગ્રાહક ઉમેરવામાં ભૂલ થઈ.");
+        alert("ગ્રાહક ઉમેરવામાં ભૂલ થઈ. કદાચ આ ID પહેલેથી અસ્તિત્વમાં છે.");
       }
     }
 
@@ -281,7 +308,7 @@ export function MobileIssueRental() {
       return (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900 text-xs">નવો ગ્રાહક ઉમેરો</h3>
+            <h3 className="text-xs font-medium text-gray-900">નવો ગ્રાહક ઉમેરો</h3>
             <button
               onClick={() => setShowAddForm(false)}
               className="text-gray-500 hover:text-gray-700"
@@ -291,32 +318,65 @@ export function MobileIssueRental() {
           </div>
 
           <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="ગ્રાહકનું નામ *"
-              value={newClientData.name}
-              onChange={e => setNewClientData(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
-            />
-            <input
-              type="text"
-              placeholder="સાઇટ"
-              value={newClientData.site}
-              onChange={e => setNewClientData(prev => ({ ...prev, site: e.target.value }))}
-              className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
-            />
-            <input
-              type="tel"
-              placeholder="મોબાઇલ નંબર"
-              value={newClientData.mobile_number}
-              onChange={e => setNewClientData(prev => ({ ...prev, mobile_number: e.target.value }))}
-              className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
-            />
+            {/* CLIENT ID FIELD - Added as requested */}
+            <div>
+              <label className="block mb-1 text-xs font-medium text-blue-700">
+                ગ્રાહક ID *
+              </label>
+              <input
+                type="text"
+                placeholder="ગ્રાહક ID દાખલ કરો (જેમ કે: A001)"
+                value={newClientData.id}
+                onChange={e => setNewClientData(prev => ({ ...prev, id: e.target.value }))}
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-xs font-medium text-blue-700">
+                ગ્રાહકનું નામ *
+              </label>
+              <input
+                type="text"
+                placeholder="ગ્રાહકનું નામ દાખલ કરો"
+                value={newClientData.name}
+                onChange={e => setNewClientData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-xs font-medium text-blue-700">
+                સાઇટ
+              </label>
+              <input
+                type="text"
+                placeholder="સાઇટનું નામ દાખલ કરો"
+                value={newClientData.site}
+                onChange={e => setNewClientData(prev => ({ ...prev, site: e.target.value }))}
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 text-xs font-medium text-blue-700">
+                મોબાઇલ નંબર
+              </label>
+              <input
+                type="tel"
+                placeholder="મોબાઇલ નંબર દાખલ કરો"
+                value={newClientData.mobile_number}
+                onChange={e => setNewClientData(prev => ({ ...prev, mobile_number: e.target.value }))}
+                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
+              />
+            </div>
           </div>
 
           <button
             onClick={handleAddClient}
-            className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded font-medium text-xs transition-colors"
+            className="w-full py-2 text-xs font-medium text-white transition-colors bg-green-500 rounded hover:bg-green-600"
           >
             ગ્રાહક ઉમેરો
           </button>
@@ -329,11 +389,11 @@ export function MobileIssueRental() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <User className="w-3 h-3 text-red-500" />
-            <h3 className="font-medium text-gray-900 text-xs">ગ્રાહક પસંદ કરો</h3>
+            <h3 className="text-xs font-medium text-gray-900">ગ્રાહક પસંદ કરો</h3>
           </div>
           <button
             onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-1 text-green-600 hover:text-green-700 text-xs font-medium"
+            className="flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700"
           >
             <Plus className="w-3 h-3" />
             નવો ઉમેરો
@@ -341,7 +401,7 @@ export function MobileIssueRental() {
         </div>
 
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3" />
+          <Search className="absolute w-3 h-3 text-gray-400 -translate-y-1/2 left-2 top-1/2" />
           <input
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -350,21 +410,19 @@ export function MobileIssueRental() {
           />
         </div>
 
-        {/* ENLARGED CLIENT SEARCH WINDOW - Increased from max-h-40 to max-h-80 */}
-        <div className="max-h-80 overflow-y-auto space-y-1 border border-gray-200 rounded p-1 bg-gray-50">
+        <div className="p-1 space-y-1 overflow-y-auto border border-gray-200 rounded max-h-80 bg-gray-50">
           {loading ? (
-            <div className="text-center py-8">
-              <Loader2 className="w-4 h-4 mx-auto mb-2 animate-spin text-red-500" />
+            <div className="py-8 text-center">
+              <Loader2 className="w-4 h-4 mx-auto mb-2 text-red-500 animate-spin" />
               <p className="text-xs text-gray-500">લોડ થઈ રહ્યું છે...</p>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="py-8 text-center text-gray-500">
               <User className="w-6 h-6 mx-auto mb-2 text-gray-300" />
               <p className="text-xs font-medium">કોઈ ગ્રાહક મળ્યો નથી</p>
-              <p className="text-xs mt-1">શોધ શબ્દ બદલીને પ્રયત્ન કરો</p>
+              <p className="mt-1 text-xs">શોધ શબ્દ બદલીને પ્રયત્ન કરો</p>
             </div>
           ) : (
-            /* REMOVED CLIENT COUNTER - No more કુલ 16 ગ્રાહકો display */
             filteredClients.map(client => (
               <button
                 key={client.id}
@@ -372,10 +430,10 @@ export function MobileIssueRental() {
                   setSelectedClient(client);
                   setShowClientSelector(false);
                 }}
-                className="w-full text-left p-2 bg-white border border-gray-200 rounded hover:border-red-300 hover:bg-red-50 transition-all text-xs shadow-sm hover:shadow-md"
+                className="w-full p-2 text-xs text-left transition-all bg-white border border-gray-200 rounded shadow-sm hover:border-red-300 hover:bg-red-50 hover:shadow-md"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gradient-to-r from-red-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                  <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full shadow-sm bg-gradient-to-r from-red-400 to-orange-500">
                     {client.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
@@ -390,7 +448,7 @@ export function MobileIssueRental() {
                         {client.site}
                       </span>
                     </div>
-                    <div className="text-xs text-red-600 font-medium">{client.mobile_number}</div>
+                    <div className="text-xs font-medium text-red-600">{client.mobile_number}</div>
                   </div>
                 </div>
               </button>
@@ -405,21 +463,21 @@ export function MobileIssueRental() {
   const isStockInsufficient = (size: string) => stockValidation.some(item => item.size === size);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 pb-20">
+    <div className="min-h-screen pb-20 bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
       <div className="p-3 space-y-3">
         {/* Compact Header */}
-        <div className="text-center pt-2">
-          <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full mb-2 shadow-lg">
+        <div className="pt-2 text-center">
+          <div className="inline-flex items-center justify-center w-10 h-10 mb-2 rounded-full shadow-lg bg-gradient-to-r from-red-500 to-orange-500">
             <FileText className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-base font-bold text-gray-900 mb-1">ઉધાર ચલણ</h1>
+          <h1 className="mb-1 text-base font-bold text-gray-900">ઉધાર ચલણ</h1>
           <p className="text-xs text-gray-600">નવો ભાડો બનાવો</p>
         </div>
 
         {/* Enhanced Client Selection with Larger Search Window */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-500 to-orange-500 p-2">
-            <h2 className="text-xs font-bold text-white flex items-center gap-1">
+        <div className="overflow-hidden bg-white border border-gray-100 rounded-lg shadow-sm">
+          <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500">
+            <h2 className="flex items-center gap-1 text-xs font-bold text-white">
               <User className="w-3 h-3" />
               ગ્રાહક
             </h2>
@@ -430,13 +488,13 @@ export function MobileIssueRental() {
               <CompactClientSelector />
             ) : (
               <div className="space-y-2">
-                <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded p-2 border border-red-200">
+                <div className="p-2 border border-red-200 rounded bg-gradient-to-r from-red-50 to-orange-50">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                    <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full bg-gradient-to-r from-red-500 to-orange-500">
                       {selectedClient.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 text-xs">{selectedClient.name}</h3>
+                      <h3 className="text-xs font-bold text-gray-900">{selectedClient.name}</h3>
                       <div className="flex items-center gap-2 text-xs text-gray-600">
                         <span className="flex items-center gap-0.5">
                           <Hash className="w-2 h-2" />
@@ -453,7 +511,7 @@ export function MobileIssueRental() {
                 
                 <button
                   onClick={() => setShowClientSelector(true)}
-                  className="text-red-600 hover:text-red-700 font-medium text-xs"
+                  className="text-xs font-medium text-red-600 hover:text-red-700"
                 >
                   ગ્રાહક બદલવો
                 </button>
@@ -464,9 +522,9 @@ export function MobileIssueRental() {
 
         {/* Compact Issue Form */}
         {selectedClient && !showClientSelector && (
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-red-500 to-orange-500 p-2">
-              <h2 className="text-xs font-bold text-white flex items-center gap-1">
+          <form onSubmit={handleSubmit} className="overflow-hidden bg-white border border-gray-100 rounded-lg shadow-sm">
+            <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500">
+              <h2 className="flex items-center gap-1 text-xs font-bold text-white">
                 <Package className="w-3 h-3" />
                 પ્લેટ ઇશ્યૂ
               </h2>
@@ -484,7 +542,7 @@ export function MobileIssueRental() {
                     value={challanNumber}
                     onChange={(e) => handleChallanNumberChange(e.target.value)}
                     onFocus={(e) => e.target.select()}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-red-200 focus:border-red-400"
                     placeholder={suggestedChallanNumber}
                     required
                   />
@@ -499,14 +557,14 @@ export function MobileIssueRental() {
                     value={challanDate}
                     onChange={(e) => setChallanDate(e.target.value)}
                     required
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-red-200 focus:border-red-400"
                   />
                 </div>
               </div>
 
               {/* Stock Warning */}
               {stockValidation.length > 0 && (
-                <div className="flex items-center gap-1 text-amber-700 bg-amber-50 p-1 rounded border border-amber-200">
+                <div className="flex items-center gap-1 p-1 border rounded text-amber-700 bg-amber-50 border-amber-200">
                   <AlertTriangle className="w-3 h-3" />
                   <span className="text-xs">અપૂરતો સ્ટોક</span>
                 </div>
@@ -514,13 +572,13 @@ export function MobileIssueRental() {
 
               {/* Compact Table */}
               <div className="overflow-x-auto">
-                <table className="w-full text-xs rounded overflow-hidden">
+                <table className="w-full overflow-hidden text-xs rounded">
                   <thead>
-                    <tr className="bg-gradient-to-r from-red-500 to-orange-500 text-white">
-                      <th className="px-1 py-1 text-left font-medium">સાઇઝ</th>
-                      <th className="px-1 py-1 text-center font-medium">સ્ટોક</th>
-                      <th className="px-1 py-1 text-center font-medium">ઇશ્યૂ</th>
-                      <th className="px-1 py-1 text-center font-medium">નોંધ</th>
+                    <tr className="text-white bg-gradient-to-r from-red-500 to-orange-500">
+                      <th className="px-1 py-1 font-medium text-left">સાઇઝ</th>
+                      <th className="px-1 py-1 font-medium text-center">સ્ટોક</th>
+                      <th className="px-1 py-1 font-medium text-center">ઇશ્યૂ</th>
+                      <th className="px-1 py-1 font-medium text-center">નોંધ</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -571,7 +629,7 @@ export function MobileIssueRental() {
               </div>
 
               {/* Compact Total */}
-              <div className="bg-red-100 rounded p-2 border border-red-200">
+              <div className="p-2 bg-red-100 border border-red-200 rounded">
                 <div className="text-center">
                   <span className="text-xs font-medium text-red-800">કુલ પ્લેટ્સ: </span>
                   <span className="text-base font-bold text-red-700">
@@ -584,7 +642,7 @@ export function MobileIssueRental() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white py-2 rounded font-medium text-xs transition-all flex items-center justify-center gap-1 disabled:opacity-50"
+                className="flex items-center justify-center w-full gap-1 py-2 text-xs font-medium text-white transition-all rounded bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50"
               >
                 {loading ? (
                   <>

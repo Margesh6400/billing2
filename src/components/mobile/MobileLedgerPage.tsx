@@ -576,14 +576,9 @@ function AllSizesActivityTable({ ledger, onDownloadChallan, downloading }: AllSi
                           const d = new Date(transaction.date);
                           const day = d.getDate().toString().padStart(2, '0');
                           const month = (d.getMonth() + 1).toString().padStart(2, '0');
-                          return `${day}/${month}`;
+                          const year = d.getFullYear().toString().slice(-2);
+                          return `${day}/${month}/${year}`;
                         })()}
-                      </div>
-                    </td>
-
-                    <td className="px-1 py-0.5 text-center border-l border-blue-100">
-                      <div className="text-xs font-medium text-blue-600">
-                        {transaction.items.reduce((sum, item) => sum + item.quantity, 0)}
                       </div>
                     </td>
                     
