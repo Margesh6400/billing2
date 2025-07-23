@@ -385,42 +385,42 @@ export function MobileIssueRental() {
     }
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <User className="w-5 h-5 text-red-500" />
-            <h3 className="text-base font-medium text-gray-900">ગ્રાહક પસંદ કરો</h3>
+          <div className="flex items-center gap-1">
+            <User className="w-3 h-3 text-red-500" />
+            <h3 className="text-xs font-medium text-gray-900">ગ્રાહક પસંદ કરો</h3>
           </div>
           <button
             onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700 py-2 px-3 rounded-lg hover:bg-green-50"
+            className="flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3 h-3" />
             નવો ઉમેરો
           </button>
         </div>
 
         <div className="relative">
-          <Search className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
+          <Search className="absolute w-3 h-3 text-gray-400 -translate-y-1/2 left-2 top-1/2" />
           <input
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all"
+            className="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-red-200 focus:border-red-400 transition-all"
             placeholder="ગ્રાહક શોધો..."
           />
         </div>
 
-        <div className="p-2 space-y-2 overflow-y-auto border border-gray-200 rounded-xl max-h-80 bg-gray-50">
+        <div className="p-1 space-y-1 overflow-y-auto border border-gray-200 rounded max-h-80 bg-gray-50">
           {loading ? (
-            <div className="py-12 text-center">
-              <Loader2 className="w-6 h-6 mx-auto mb-3 text-red-500 animate-spin" />
-              <p className="text-sm text-gray-500">લોડ થઈ રહ્યું છે...</p>
+            <div className="py-8 text-center">
+              <Loader2 className="w-4 h-4 mx-auto mb-2 text-red-500 animate-spin" />
+              <p className="text-xs text-gray-500">લોડ થઈ રહ્યું છે...</p>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="py-12 text-center text-gray-500">
-              <User className="w-8 h-8 mx-auto mb-3 text-gray-300" />
-              <p className="text-base font-medium">કોઈ ગ્રાહક મળ્યો નથી</p>
-              <p className="mt-2 text-sm">શોધ શબ્દ બદલીને પ્રયત્ન કરો</p>
+            <div className="py-8 text-center text-gray-500">
+              <User className="w-6 h-6 mx-auto mb-2 text-gray-300" />
+              <p className="text-xs font-medium">કોઈ ગ્રાહક મળ્યો નથી</p>
+              <p className="mt-1 text-xs">શોધ શબ્દ બદલીને પ્રયત્ન કરો</p>
             </div>
           ) : (
             filteredClients.map(client => (
@@ -430,25 +430,25 @@ export function MobileIssueRental() {
                   setSelectedClient(client);
                   setShowClientSelector(false);
                 }}
-                className="w-full p-4 text-sm text-left transition-all bg-white border border-gray-200 rounded-xl shadow-sm hover:border-red-300 hover:bg-red-50 hover:shadow-md"
+                className="w-full p-2 text-xs text-left transition-all bg-white border border-gray-200 rounded shadow-sm hover:border-red-300 hover:bg-red-50 hover:shadow-md"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 text-base font-bold text-white rounded-full shadow-sm bg-gradient-to-r from-red-400 to-orange-500">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full shadow-sm bg-gradient-to-r from-red-400 to-orange-500">
                     {client.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
-                    <div className="text-base font-medium text-gray-900">{client.name}</div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                    <div className="font-medium text-gray-900">{client.name}</div>
+                    <div className="flex items-center gap-2 text-xs text-gray-600 mt-0.5">
                       <span className="flex items-center gap-0.5">
-                        <Hash className="w-3 h-3" />
+                        <Hash className="w-2 h-2" />
                         {client.id}
                       </span>
                       <span className="flex items-center gap-0.5">
-                        <MapPin className="w-3 h-3" />
+                        <MapPin className="w-2 h-2" />
                         {client.site}
                       </span>
                     </div>
-                    <div className="text-sm font-medium text-red-600 mt-1">{client.mobile_number}</div>
+                    <div className="text-xs font-medium text-red-600">{client.mobile_number}</div>
                   </div>
                 </div>
               </button>
@@ -463,45 +463,45 @@ export function MobileIssueRental() {
   const isStockInsufficient = (size: string) => stockValidation.some(item => item.size === size);
 
   return (
-    <div className="min-h-screen pb-28 bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
-      <div className="p-4 space-y-4">
+    <div className="min-h-screen pb-20 bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
+      <div className="p-3 space-y-3">
         {/* Compact Header */}
-        <div className="pt-4 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full shadow-lg bg-gradient-to-r from-red-500 to-orange-500">
-            <FileText className="w-8 h-8 text-white" />
+        <div className="pt-2 text-center">
+          <div className="inline-flex items-center justify-center w-10 h-10 mb-2 rounded-full shadow-lg bg-gradient-to-r from-red-500 to-orange-500">
+            <FileText className="w-5 h-5 text-white" />
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">ઉધાર ચલણ</h1>
-          <p className="text-base text-gray-600">નવો ભાડો બનાવો</p>
+          <h1 className="mb-1 text-base font-bold text-gray-900">ઉધાર ચલણ</h1>
+          <p className="text-xs text-gray-600">નવો ભાડો બનાવો</p>
         </div>
 
         {/* Enhanced Client Selection with Larger Search Window */}
-        <div className="overflow-hidden bg-white border-2 border-gray-100 rounded-2xl shadow-lg">
-          <div className="p-4 bg-gradient-to-r from-red-500 to-orange-500">
-            <h2 className="flex items-center gap-2 text-base font-bold text-white">
-              <User className="w-5 h-5" />
+        <div className="overflow-hidden bg-white border border-gray-100 rounded-lg shadow-sm">
+          <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500">
+            <h2 className="flex items-center gap-1 text-xs font-bold text-white">
+              <User className="w-3 h-3" />
               ગ્રાહક
             </h2>
           </div>
           
-          <div className="p-4">
+          <div className="p-2">
             {!selectedClient || showClientSelector ? (
               <CompactClientSelector />
             ) : (
-              <div className="space-y-3">
-                <div className="p-4 border border-red-200 rounded-xl bg-gradient-to-r from-red-50 to-orange-50">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 text-base font-bold text-white rounded-full bg-gradient-to-r from-red-500 to-orange-500">
+              <div className="space-y-2">
+                <div className="p-2 border border-red-200 rounded bg-gradient-to-r from-red-50 to-orange-50">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white rounded-full bg-gradient-to-r from-red-500 to-orange-500">
                       {selectedClient.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-base font-bold text-gray-900">{selectedClient.name}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <h3 className="text-xs font-bold text-gray-900">{selectedClient.name}</h3>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
                         <span className="flex items-center gap-0.5">
-                          <Hash className="w-3 h-3" />
+                          <Hash className="w-2 h-2" />
                           {selectedClient.id}
                         </span>
                         <span className="flex items-center gap-0.5">
-                          <MapPin className="w-3 h-3" />
+                          <MapPin className="w-2 h-2" />
                           {selectedClient.site}
                         </span>
                       </div>
@@ -511,7 +511,7 @@ export function MobileIssueRental() {
                 
                 <button
                   onClick={() => setShowClientSelector(true)}
-                  className="text-sm font-medium text-red-600 hover:text-red-700 py-2"
+                  className="text-xs font-medium text-red-600 hover:text-red-700"
                 >
                   ગ્રાહક બદલવો
                 </button>
@@ -522,19 +522,19 @@ export function MobileIssueRental() {
 
         {/* Compact Issue Form */}
         {selectedClient && !showClientSelector && (
-          <form onSubmit={handleSubmit} className="overflow-hidden bg-white border-2 border-gray-100 rounded-2xl shadow-lg">
-            <div className="p-4 bg-gradient-to-r from-red-500 to-orange-500">
-              <h2 className="flex items-center gap-2 text-base font-bold text-white">
-                <Package className="w-5 h-5" />
+          <form onSubmit={handleSubmit} className="overflow-hidden bg-white border border-gray-100 rounded-lg shadow-sm">
+            <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500">
+              <h2 className="flex items-center gap-1 text-xs font-bold text-white">
+                <Package className="w-3 h-3" />
                 પ્લેટ ઇશ્યૂ
               </h2>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-2 space-y-2">
               {/* Compact Form Header */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     ચલણ નંબર *
                   </label>
                   <input
@@ -542,14 +542,14 @@ export function MobileIssueRental() {
                     value={challanNumber}
                     onChange={(e) => handleChallanNumberChange(e.target.value)}
                     onFocus={(e) => e.target.select()}
-                    className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:border-red-400"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-red-200 focus:border-red-400"
                     placeholder={suggestedChallanNumber}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     તારીખ *
                   </label>
                   <input
@@ -557,28 +557,28 @@ export function MobileIssueRental() {
                     value={challanDate}
                     onChange={(e) => setChallanDate(e.target.value)}
                     required
-                    className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:border-red-400"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-red-200 focus:border-red-400"
                   />
                 </div>
               </div>
 
               {/* Stock Warning */}
               {stockValidation.length > 0 && (
-                <div className="flex items-center gap-2 p-3 border rounded-lg text-amber-700 bg-amber-50 border-amber-200">
-                  <AlertTriangle className="w-5 h-5" />
-                  <span className="text-sm font-medium">અપૂરતો સ્ટોક</span>
+                <div className="flex items-center gap-1 p-1 border rounded text-amber-700 bg-amber-50 border-amber-200">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span className="text-xs">અપૂરતો સ્ટોક</span>
                 </div>
               )}
 
               {/* Compact Table */}
               <div className="overflow-x-auto">
-                <table className="w-full overflow-hidden text-sm rounded-lg">
+                <table className="w-full overflow-hidden text-xs rounded">
                   <thead>
                     <tr className="text-white bg-gradient-to-r from-red-500 to-orange-500">
-                      <th className="px-3 py-3 font-medium text-left">સાઇઝ</th>
-                      <th className="px-3 py-3 font-medium text-center">સ્ટોક</th>
-                      <th className="px-3 py-3 font-medium text-center">ઇશ્યૂ</th>
-                      <th className="px-3 py-3 font-medium text-center">નોંધ</th>
+                      <th className="px-1 py-1 font-medium text-left">સાઇઝ</th>
+                      <th className="px-1 py-1 font-medium text-center">સ્ટોક</th>
+                      <th className="px-1 py-1 font-medium text-center">ઇશ્યૂ</th>
+                      <th className="px-1 py-1 font-medium text-center">નોંધ</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -587,35 +587,35 @@ export function MobileIssueRental() {
                       const isInsufficient = isStockInsufficient(size);
                       return (
                         <tr key={size} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} ${isInsufficient ? 'bg-red-50' : ''}`}>
-                          <td className="px-3 py-3 font-medium">{size}</td>
-                          <td className="px-3 py-3 text-center">
-                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg font-bold ${
+                          <td className="px-1 py-1 font-medium">{size}</td>
+                          <td className="px-1 py-1 text-center">
+                            <span className={`inline-flex items-center justify-center w-5 h-5 rounded font-bold ${
                               isInsufficient ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                             }`}>
                               {stockInfo?.available_quantity || 0}
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-center">
+                          <td className="px-1 py-1 text-center">
                             <input
                               type="number"
                               min={0}
                               value={quantities[size] || ""}
                               onChange={e => handleQuantityChange(size, e.target.value)}
-                              className={`w-16 px-2 py-2 border rounded-lg text-center ${
+                              className={`w-10 px-0.5 py-0.5 border rounded text-center ${
                                 isInsufficient ? 'border-red-300 bg-red-50' : 'border-gray-300'
                               }`}
                               placeholder="0"
                             />
                             {isInsufficient && (
-                              <div className="text-xs text-red-600 mt-1">
+                              <div className="text-xs text-red-600 mt-0.5">
                                 માત્ર {stockValidation.find(item => item.size === size)?.available}
                               </div>
                             )}
                           </td>
-                          <td className="px-3 py-3 text-center">
+                          <td className="px-1 py-1 text-center">
                             <input
                               type="text"
-                              className="w-20 px-2 py-2 border border-gray-300 rounded-lg"
+                              className="w-16 px-0.5 py-0.5 border border-gray-300 rounded"
                               value={notes[size] || ""}
                               onChange={e => handleNoteChange(size, e.target.value)}
                               placeholder="નોંધ"
@@ -629,10 +629,10 @@ export function MobileIssueRental() {
               </div>
 
               {/* Compact Total */}
-              <div className="p-4 bg-red-100 border border-red-200 rounded-xl">
+              <div className="p-2 bg-red-100 border border-red-200 rounded">
                 <div className="text-center">
-                  <span className="text-base font-medium text-red-800">કુલ પ્લેટ્સ: </span>
-                  <span className="text-2xl font-bold text-red-700">
+                  <span className="text-xs font-medium text-red-800">કુલ પ્લેટ્સ: </span>
+                  <span className="text-base font-bold text-red-700">
                     {Object.values(quantities).reduce((sum, qty) => sum + (qty || 0), 0)}
                   </span>
                 </div>
@@ -642,16 +642,16 @@ export function MobileIssueRental() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center justify-center w-full gap-2 py-4 text-base font-medium text-white transition-all rounded-xl bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 min-h-[56px]"
+                className="flex items-center justify-center w-full gap-1 py-2 text-xs font-medium text-white transition-all rounded bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin" />
                     બનાવી રહ્યા છીએ...
                   </>
                 ) : (
                   <>
-                    <Save className="w-5 h-5" />
+                    <Save className="w-3 h-3" />
                     ઉધાર ચલણ બનાવો
                   </>
                 )}
