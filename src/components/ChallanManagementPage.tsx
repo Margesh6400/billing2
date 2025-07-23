@@ -450,7 +450,7 @@ export function ChallanManagementPage() {
           <div className="inline-flex items-center justify-center w-10 h-10 mb-2 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
             <BookOpen className="w-5 h-5 text-white" />
           </div>
-          <h1 className="mb-1 text-base font-bold text-gray-900">ચલણ વ્યવસ્થાપન</h1>
+          <h1 className="mb-1 text-base font-bold text-gray-900">ચલણ બૂક</h1>
           <p className="text-xs text-blue-600">બધા ચલણોનું સંચાલન</p>
         </div>
 

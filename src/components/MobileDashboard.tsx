@@ -270,12 +270,12 @@ export function MobileDashboard() {
               count={stats.pendingJamaReturns}
             />
               <QuickAccessCard
-                to="/mobile-ledger"
-                title="ખાતાવહી"
-                subtitle="ગ્રાહક બાકી જુઓ"
-                icon={BookOpen}
-                color="from-yellow-500 to-amber-500"
-                count={stats.activeUdharChallans}
+              to="/ledger"
+              title="ખાતાવહી"
+              subtitle="ગ્રાહક બાકી જુઓ"
+              icon={BookOpen}
+              color="from-yellow-500 to-amber-500"
+              count={stats.activeUdharChallans}
               />
             <QuickAccessCard
               to="/stock"
@@ -286,12 +286,12 @@ export function MobileDashboard() {
               count={stats.totalStock}
             />
             <QuickAccessCard
-              to="/mobile-clients"
-              title="ગ્રાહક વ્યવસ્થા"
-              subtitle="ગ્રાહક માહિતી"
-              icon={Users}
+              to="/challans"
+              title="ચલણ બૂક"
+              subtitle="ચલણ વ્યવસ્થા"
+              icon={FileText}
               color="from-cyan-500 to-blue-500"
-              count={stats.totalClients}
+              count={stats.activeUdharChallans}
             />
             <QuickAccessCard
               to="/clients"
