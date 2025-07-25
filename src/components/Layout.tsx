@@ -73,7 +73,7 @@ export function Layout() {
               </div>
             </div>
 
-            {/* Desktop Sign Out */}
+            {/* Desktop Sign Out Authentication*/}
             <div className="hidden md:flex md:items-center">
               <button
                 onClick={handleSignOut}
